@@ -36,7 +36,12 @@ void mutex_lock(mutex_t *m) {
 }
 
 void mutex_unlock(mutex_t *m) {
+    if (!m) return;
     u32 f = irq_save();
+    if (!m->locked || m->owner != current) {
+        irq_restore(f);
+        return;
+    }
     m->locked = 0; m->owner = 0;
     thread_t *w = wq_pop(&m->q);
     if (w) thread_wake(w);
@@ -44,7 +49,8 @@ void mutex_unlock(mutex_t *m) {
 }
 
 void sem_init(sem_t *s, int n) {
-    s->count = n;
+    if (!s) return;
+    s->count = n < 0 ? 0 : n;
     s->q.head = 0;
     s->q.tail = 0;
 }
