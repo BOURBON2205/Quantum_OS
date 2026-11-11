@@ -457,7 +457,7 @@ void shell_run(void) {
         } else if (!strcmp(c, "about")) {
             ui_header("SYSTEM INFORMATION", "QuantumOS kernel profile");
             ui_row("OS", "QuantumOS v1.0");
-            ui_row("Type", "Specialized Educational Operating System");
+            ui_row("Type", "Educational 32-bit operating system");
             ui_row("Interface", "Command-line shell");
             ui_row("CPU", "i386 protected mode");
             ui_row("Scheduler", "Preemptive Round Robin");
