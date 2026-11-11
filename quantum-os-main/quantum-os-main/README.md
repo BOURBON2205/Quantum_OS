@@ -1,15 +1,15 @@
-# QuantumOS - Mini OS Tugas Besar Sistem Operasi
+# QuantumOS - Mini Operating System
 
-Kernel i386 (protected mode) ditulis dengan C + GNU assembler, dijalankan di QEMU.
+A small 32-bit i386 kernel written in C and GNU assembler, designed to run in QEMU.
 
-## Setup (Windows: pakai WSL2 + Ubuntu)
+## Setup (Windows with WSL2 + Ubuntu)
 1. PowerShell (admin): `wsl --install -d Ubuntu`, restart.
 2. VSCode: install extension **WSL**, **C/C++**; buka folder ini lewat "WSL: Open Folder in WSL".
 3. Di terminal WSL:
    `sudo apt update && sudo apt install -y build-essential gcc-multilib qemu-system-x86 grub-pc-bin grub-common xorriso mtools gdb`
 
-## Build & jalankan
-| Perintah | Fungsi |
+## Build and run
+| Command | Description |
 |---|---|
 | `make` | build `build/quantum.elf` |
 | `make run` | QEMU + jendela VGA (keyboard) + serial di terminal |
@@ -17,8 +17,8 @@ Kernel i386 (protected mode) ditulis dengan C + GNU assembler, dijalankan di QEM
 | `make run-iso` | boot lewat **GRUB** sungguhan (ISO) |
 | `make debug` | QEMU menunggu gdb (F5 di VSCode: "Debug QuantumOS") |
 
-## Peta file -> komponen tugas
-| File | Komponen |
+## Source files and OS components
+| File | Component |
 |---|---|
 | `boot.S`, `linker.ld`, `main.c`, `console.c`, `shell.c` | Bootstrapping & CLI (VGA + serial + keyboard PS/2) |
 | `interrupts.c`, `isr.S` | GDT, IDT, PIC, PIT 100 Hz, exception handler |
@@ -28,7 +28,7 @@ Kernel i386 (protected mode) ditulis dengan C + GNU assembler, dijalankan di QEM
 | `mem.c` | Alokator heap: first-fit, split, coalesce, OOM aman |
 | `fs.c` | RAMFS CRUD + hak akses user (root/guest, owner/other, r/w) |
 
-## Skrip demo (urutan untuk presentasi)
+## Suggested demonstration sequence
 ```
 help
 threads              # 2 thread, perubahan status ditampilkan
@@ -43,4 +43,4 @@ cat secret.txt       # DITOLAK (guest)
 write readme.txt x   # DITOLAK (guest)
 su root toor ; cat secret.txt                # berhasil
 ```
-User awal `guest`. Password root: `toor`.
+Default user: `guest`. Root password: `toor` (demonstration only; not suitable for real security).
