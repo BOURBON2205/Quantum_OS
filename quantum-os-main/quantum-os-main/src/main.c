@@ -12,9 +12,8 @@ void kmain(void) {
     fs_init();
     banner();
     console_color(10);
-    kprintf("[BOOT] All kernel subsystems initialized successfully.\n");
+    kputs("[ READY ] kernel online | shell ready | scheduler armed\n\n");
     console_color(15);
-    kputs("Type 'help' to open the QuantumOS Command Center.\n\n");
     __asm__ volatile("sti");
     shell_run();
 }
