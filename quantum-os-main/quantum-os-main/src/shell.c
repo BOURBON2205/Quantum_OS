@@ -39,10 +39,10 @@ static void ui_row(const char *key, const char *value) {
     int len = (int)strlen(key);
     console_color(14);
     kprintf("  %s", key);
-    for (int i = len; i < 20; i++) kputc(" "[0]);
+    for (int i = len; i < 20; i++) kputc(' ');
     console_color(15);
     kputs(value);
-    kputc("\n"[0]);
+    kputc('\n');
 }
 
 static void ui_ok(const char *text) {
@@ -94,7 +94,7 @@ static void draw_quantumos(void) {
         kputs("    ");
         for (int letter = 0; letter < 9; letter++) {
             for (int col = 0; col < 7; col++)
-                kputc(font[letters[letter]][row][col] == "#" [0] ? "#" [0] : " "[0]);
+                kputc(font[letters[letter]][row][col] == '#' ? '#' : ' ');
             if (letter < 8) kputc(" "[0]);
         }
         kputc("\n"[0]);
