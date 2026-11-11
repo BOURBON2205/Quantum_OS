@@ -157,8 +157,11 @@ void threads_dump(void) {
         if (t->state == T_UNUSED) continue;
 
         console_color(t == current ? 10 : 15);
-        kprintf("  %3d  %-14s  %-13s  %u\n",
-                t->tid, t->name, state_name(t->state), t->runtime);
+        kprintf("  %3d  %s", t->tid, t->name);
+        for (int k = (int)strlen(t->name); k < 16; k++) kputc(' ');
+        kprintf("%s", state_name(t->state));
+        for (int k = (int)strlen(state_name(t->state)); k < 15; k++) kputc(' ');
+        kprintf("%u\n", t->runtime);
         console_color(15);
     }
 
