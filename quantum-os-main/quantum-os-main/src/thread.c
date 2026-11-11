@@ -18,10 +18,12 @@ static int slice = QUANTUM;
 
 const char *state_name(enum tstate s) {
     static const char *n[] = { "UNUSED", "NEW", "READY", "RUNNING", "WAITING", "TERMINATED" };
-    return n[s];
+    return (unsigned)s < sizeof(n) / sizeof(n[0]) ? n[s] : "UNKNOWN";
 }
 
-thread_t *thread_table(int i) { return &table[i]; }
+thread_t *thread_table(int i) {
+    return (i >= 0 && i < MAX_THREADS) ? &table[i] : 0;
+}
 
 static void set_state(thread_t *t, enum tstate s) {
     if (trace_on && t->state != s && t != &table[1])
@@ -46,6 +48,7 @@ void threads_init(void) {
 }
 
 thread_t *thread_create(const char *name, void (*fn)(void *), void *arg) {
+    if (!name || !fn) return 0;
     u32 f = irq_save();
     thread_t *t = 0;
     for (int i = 1; i < MAX_THREADS; i++) {
@@ -138,8 +141,10 @@ int thread_kill(int tid) {
     u32 f = irq_save(); int r = -1;
     for (int i = 2; i < MAX_THREADS; i++)
         if (table[i].tid == tid && &table[i] != current &&
-            table[i].state != T_UNUSED && table[i].state != T_TERMINATED) {
-            table[i].sleeping = 0; set_state(&table[i], T_TERMINATED); r = 0;
+            table[i].state == T_READY) {
+            table[i].sleeping = 0;
+            set_state(&table[i], T_TERMINATED);
+            r = 0;
         }
     irq_restore(f);
     return r;
