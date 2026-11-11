@@ -12,7 +12,7 @@ void kmain(void) {
     fs_init();
     banner();
     console_color(10);
-    kputs("[ READY ] kernel online | shell ready | scheduler armed\n\n");
+    kputs("[ READY ] Kernel online | shell ready | scheduler active\n\n");
     console_color(15);
     __asm__ volatile("sti");
     shell_run();
