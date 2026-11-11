@@ -94,7 +94,7 @@ static void dl_2(void *a) {
 }
 
 void demo_deadlock(int fix) {
-    for (int i = 2; i < MAX_THREADS; i++) {              /* bersihkan thread macet dari demo sebelumnya */
+    for (int i = 2; i < MAX_THREADS; i++) {              /* Remove blocked threads left by a previous deadlock demonstration. */
         thread_t *t = thread_table(i);
         if (t->state == T_WAITING && !strncmp(t->name, "dl-", 3)) thread_kill(t->tid);
     }
@@ -108,16 +108,16 @@ void demo_deadlock(int fix) {
         sem_wait(&done); sem_wait(&done);
         kprintf("  [ OK ] both threads completed; circular wait was prevented.\n");
     } else {
-        thread_sleep(60);                                 /* beri waktu thread saling mengunci */
+        thread_sleep(60);                                 /* Allow both workers time to acquire their first lock and block. */
         if (!detect_deadlock()) kprintf("  [ OK ] no deadlock detected.\n");
         kprintf("  [ .. ] use 'ps' to inspect WAITING threads; clean them with 'kill <tid>'.\n");
     }
 }
 
-/* ---------- 4. memori ---------- */
+/* ---------- 4. Memory ---------- */
 static void print_mem(void) {
     struct meminfo m; mem_info(&m);
-    kprintf("  total=%u  terpakai=%u  tersedia=%u  blok=%u  (alloc=%u free=%u gagal=%u)\n",
+    kprintf("  total=%u  used=%u  available=%u  blocks=%u  (alloc=%u free=%u failed=%u)\n",
             m.total, m.used, m.free, m.nblocks, m.nalloc, m.nfree, m.nfail);
 }
 
