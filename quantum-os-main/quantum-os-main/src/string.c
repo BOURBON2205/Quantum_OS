@@ -1,4 +1,4 @@
-/* string.c - fungsi string/memori minimal (tanpa libc) */
+/* Minimal freestanding string and memory routines (no libc). */
 #include "kernel.h"
 
 size_t strlen(const char *s) { size_t n = 0; while (s[n]) n++; return n; }
@@ -34,14 +34,32 @@ void *memcpy(void *d, const void *s, size_t n) {
 
 void *memmove(void *d, const void *s, size_t n) {
     u8 *a = d; const u8 *b = s;
-    if (a < b) while (n--) *a++ = *b++;
+    if ((uintptr_t)a < (uintptr_t)b) while (n--) *a++ = *b++;
     else { a += n; b += n; while (n--) *--a = *--b; }
     return d;
 }
 
 int atoi(const char *s) {
-    int v = 0, neg = 0;
-    if (*s == '-') { neg = 1; s++; }
-    while (*s >= '0' && *s <= '9') v = v * 10 + (*s++ - '0');
-    return neg ? -v : v;
+    if (!s) return 0;
+    int negative = 0;
+    if (*s == '-' || *s == '+') {
+        negative = (*s == '-');
+        s++;
+    }
+    if (*s < '0' || *s > '9') return 0;
+
+    u32 limit = negative ? 0x80000000U : 0x7FFFFFFFU;
+    u32 value = 0;
+    while (*s >= '0' && *s <= '9') {
+        u32 digit = (u32)(*s++ - '0');
+        if (value > (limit - digit) / 10U)
+            return negative ? (-2147483647 - 1) : 2147483647;
+        value = value * 10U + digit;
+    }
+
+    if (negative) {
+        if (value == 0x80000000U) return (-2147483647 - 1);
+        return -(int)value;
+    }
+    return (int)value;
 }
