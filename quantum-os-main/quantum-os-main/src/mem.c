@@ -4,7 +4,7 @@
  * ========================================================================== */
 #include "kernel.h"
 
-#define HEAP_SIZE (512 * 1024)
+#define HEAP_SIZE KERNEL_HEAP_SIZE
 #define MAGIC 0xB0B0CAFE
 
 struct blk {
