@@ -172,6 +172,7 @@ typedef struct {
 void mutex_init(mutex_t *mutex, const char *name);
 void mutex_lock(mutex_t *mutex);
 void mutex_unlock(mutex_t *mutex);
+int  mutex_cancel_wait(thread_t *thread);
 
 void sem_init(sem_t *sem, int count);
 void sem_wait(sem_t *sem);
