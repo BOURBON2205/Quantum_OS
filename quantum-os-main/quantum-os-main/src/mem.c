@@ -29,8 +29,13 @@ void mem_init(void) {
 
 void *kmalloc(u32 n) {
     if (n == 0) return 0;
-    n = (n + 15) & ~15u;
     u32 f = irq_save();
+    if (n > HEAP_SIZE - sizeof(struct blk) - 15U) {
+        n_fail++;
+        irq_restore(f);
+        return 0;
+    }
+    n = (n + 15U) & ~15U;
     for (struct blk *b = head; b; b = b->next) {
         if (!b->free || b->size < n) continue;
         if (b->size >= n + sizeof(struct blk) + 16) {          /* split */
@@ -62,6 +67,7 @@ void kfree(void *p) {
 }
 
 void mem_info(struct meminfo *mi) {
+    if (!mi) return;
     u32 f = irq_save();
     memset(mi, 0, sizeof(*mi));
     mi->total = HEAP_SIZE;
