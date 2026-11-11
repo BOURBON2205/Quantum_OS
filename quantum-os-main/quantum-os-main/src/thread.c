@@ -141,10 +141,14 @@ int thread_kill(int tid) {
     u32 f = irq_save(); int r = -1;
     for (int i = 2; i < MAX_THREADS; i++)
         if (table[i].tid == tid && &table[i] != current &&
-            table[i].state == T_READY) {
-            table[i].sleeping = 0;
-            set_state(&table[i], T_TERMINATED);
-            r = 0;
+            table[i].state != T_UNUSED && table[i].state != T_TERMINATED) {
+            thread_t *t = &table[i];
+            if (t->state == T_READY || (t->state == T_WAITING &&
+                (t->sleeping || mutex_cancel_wait(t)))) {
+                t->sleeping = 0;
+                set_state(t, T_TERMINATED);
+                r = 0;
+            }
         }
     irq_restore(f);
     return r;
