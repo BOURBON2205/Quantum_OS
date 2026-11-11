@@ -322,18 +322,22 @@ static void show_conversion(const char *number, int source, int target) {
 static int ask_base(const char *step) {
     char choice[8];
     u32 selected;
-    console_color(11);
-    kprintf("\n%s\n", step);
-    console_color(14);
-    kputs("  1  BIN (binary)       2  OCT (octal)\n");
-    kputs("  3  DEC (decimal)      4  HEX (hexadecimal)\n");
-    console_color(7);
-    kputs("  Enter 1-4, or 0 to cancel: ");
-    console_color(15);
-    readline(choice, sizeof(choice));
-    if (!parse_u32_arg(choice, &selected) || selected > 4) return 0;
-    if (selected == 0) return -1;
-    return selected == 1 ? 2 : selected == 2 ? 8 : selected == 3 ? 10 : 16;
+    for (;;) {
+        console_color(11);
+        kprintf("\n%s\n", step);
+        console_color(14);
+        kputs("  1  BIN (binary)       2  OCT (octal)\n");
+        kputs("  3  DEC (decimal)      4  HEX (hexadecimal)\n");
+        console_color(7);
+        kputs("  Enter 1-4, or 0 to cancel: ");
+        console_color(15);
+        readline(choice, sizeof(choice));
+        if (parse_u32_arg(choice, &selected) && selected == 0) return -1;
+        if (parse_u32_arg(choice, &selected) && selected <= 4) {
+            return selected == 1 ? 2 : selected == 2 ? 8 : selected == 3 ? 10 : 16;
+        }
+        ui_error("Please enter 1, 2, 3, 4, or 0 to cancel.");
+    }
 }
 
 static void convert_number(int ac, char **av) {
