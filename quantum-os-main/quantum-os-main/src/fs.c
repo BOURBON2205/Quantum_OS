@@ -57,7 +57,7 @@ static int allowed(struct file *f, int want) {
 static int create_as(const char *name, int uid, int po, int pt) {
     if (!name || !*name || strlen(name) >= NAME_LEN) return E_NOENT;
     for (const char *c = name; *c; c++)
-        if ((u8)*c < 33 || *c == '/' || *c == '\\\\' || *c == ':') return E_NOENT;
+        if ((u8)*c < 33 || *c == '/' || *c == '\\' || *c == ':') return E_NOENT;
     if (find(name)) return E_EXIST;
     for (int i = 0; i < MAX_FILES; i++) if (!files[i].used) {
         struct file *f = &files[i];
