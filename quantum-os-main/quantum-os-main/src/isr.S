@@ -1,4 +1,7 @@
-/* isr.S - stub interrupt (0-31 exception, 32 = timer) + context switch */
+/* ============================================================================
+ * isr.S
+ * Interrupt stubs and low-level context switching.
+ * ========================================================================== */
 .section .rodata
 .global isr_table
 isr_table:
