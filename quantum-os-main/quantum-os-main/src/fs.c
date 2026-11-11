@@ -25,6 +25,7 @@ const char *uid_name(int uid) {
 }
 
 int user_switch(const char *name, const char *pass) {
+    if (!name) return E_NOENT;
     if (!strcmp(name, "guest")) {
         cur_uid = UID_GUEST;
         return 0;
@@ -41,11 +42,12 @@ int user_switch(const char *name, const char *pass) {
 }
 
 static struct file *find(const char *n) {
+    if (!n) return 0;
     for (int i = 0; i < MAX_FILES; i++) if (files[i].used && !strcmp(files[i].name, n)) return &files[i];
     return 0;
 }
 
-/* root boleh semuanya; selain itu cek bit owner atau other */
+/* Root bypasses file permission checks; other users use owner/other bits. */
 static int allowed(struct file *f, int want) {
     if (cur_uid == UID_ROOT) return 1;
     u8 p = (f->owner == cur_uid) ? f->p_owner : f->p_other;
@@ -53,8 +55,10 @@ static int allowed(struct file *f, int want) {
 }
 
 static int create_as(const char *name, int uid, int po, int pt) {
+    if (!name || !*name || strlen(name) >= NAME_LEN) return E_NOENT;
+    for (const char *c = name; *c; c++)
+        if ((u8)*c < 33 || *c == '/' || *c == '\\\\' || *c == ':') return E_NOENT;
     if (find(name)) return E_EXIST;
-    if (strlen(name) == 0 || strlen(name) >= NAME_LEN) return E_NOENT;
     for (int i = 0; i < MAX_FILES; i++) if (!files[i].used) {
         struct file *f = &files[i];
         memset(f, 0, sizeof(*f));
@@ -68,6 +72,7 @@ static int create_as(const char *name, int uid, int po, int pt) {
 int fs_create(const char *name) { return create_as(name, cur_uid, 6, 4); }
 
 int fs_write(const char *name, const char *txt, int append) {
+    if (!txt) return E_NOENT;
     struct file *f = find(name);
     if (!f) return E_NOENT;
     if (!allowed(f, P_W)) return E_PERM;
@@ -75,7 +80,8 @@ int fs_write(const char *name, const char *txt, int append) {
     if (len > 0xFFFFFFFFU - base - 1U) return E_NOMEM;
     u32 need = base + len + 1U;
     if (need > f->cap) {
-        u32 nc = (need + 63) & ~63u;
+        if (need > 0xFFFFFFC0U) return E_NOMEM;
+        u32 nc = (need + 63U) & ~63U;
         char *nb = kmalloc(nc);
         if (!nb) return E_NOMEM;
         if (f->data) { memcpy(nb, f->data, f->size); kfree(f->data); }
@@ -87,6 +93,7 @@ int fs_write(const char *name, const char *txt, int append) {
 }
 
 int fs_read(const char *name, const char **data, u32 *size) {
+    if (!data || !size) return E_NOENT;
     struct file *f = find(name);
     if (!f) return E_NOENT;
     if (!allowed(f, P_R)) return E_PERM;
@@ -104,6 +111,7 @@ int fs_delete(const char *name) {
 }
 
 int fs_chmod(const char *name, int owner, int other) {
+    if (owner < 0 || owner > 7 || other < 0 || other > 7) return E_PERM;
     struct file *f = find(name);
     if (!f) return E_NOENT;
     if (cur_uid != UID_ROOT && f->owner != cur_uid) return E_PERM;
