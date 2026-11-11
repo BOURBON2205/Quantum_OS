@@ -121,10 +121,11 @@ void fs_list(void) {
 
     for (int i = 0; i < MAX_FILES; i++) if (files[i].used) {
         struct file *f = &files[i];
-
-        kprintf("  %-22s  %-7s  %c%c  %c%c    %u B\n",
-                f->name,
-                uid_name(f->owner),
+        kprintf("  %s", f->name);
+        for (int k = (int)strlen(f->name); k < 24; k++) kputc(' ');
+        kprintf("%s", uid_name(f->owner));
+        for (int k = (int)strlen(uid_name(f->owner)); k < 9; k++) kputc(' ');
+        kprintf("%c%c  %c%c    %u B\n",
                 f->p_owner & 4 ? 'r' : '-',
                 f->p_owner & 2 ? 'w' : '-',
                 f->p_other & 4 ? 'r' : '-',
