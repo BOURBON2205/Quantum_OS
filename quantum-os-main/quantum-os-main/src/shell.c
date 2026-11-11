@@ -78,45 +78,25 @@ static void ui_usage(const char *text) {
 }
 
 void banner(void) {
-    /* Compact welcome header leaves room for command output on 80x25 VGA. */
     console_color(11);
-    kputs("\n  +----------------------------------------------------------------------------+\n");
-    console_color(15);
-    kputs("  |  QUANTUM OS                                                  VERSION 1.0   |\n");
-    console_color(11);
-    kputs("  +----------------------------------------------------------------------------+\n");
-
-    console_color(7);
-    kputs("  A lightweight 32-bit operating system for learning core OS concepts.\n");
-    console_color(10);
-    kputs("  [OK] CPU  [OK] TIMER  [OK] MEMORY  [OK] THREADS  [OK] RAMFS  [OK] SECURITY\n");
-
-    console_color(11);
-    kputs("  MAIN MENU\n");
+    kputs("\n  QUANTUM OS  v1.0\n");
     console_color(8);
-    kputs("  ------------------------------------------------------------------------------\n");
-    console_color(14);
-    kputs("   01  Number conversion       02  System information\n");
-    kputs("   03  Processes & scheduling  04  Memory management\n");
-    kputs("   05  File system             06  Security & permissions\n");
-    kputs("   07  OS demonstrations\n");
-
+    kputs("  --------------------------------------------------------------\n");
     console_color(7);
-    kputs("  Type ");
-    console_color(14);
-    kputs("help");
-    console_color(7);
-    kputs(" for commands, or ");
-    console_color(14);
-    kputs("help 1");
-    console_color(7);
-    kputs(" to ");
-    console_color(14);
-    kputs("help 7");
-    console_color(7);
-    kputs(" for details.\n");
+    kputs("  32-bit educational operating system\n");
+    console_color(10);
+    kputs("  CPU  OK   TIMER  OK   MEMORY  OK   THREADS  OK   RAMFS  OK\n");
     console_color(11);
-    kputs("  ------------------------------------------------------------------------------\n");
+    kputs("\n  MAIN MENU\n");
+    console_color(14);
+    kputs("  1  Convert numbers       2  System information\n");
+    kputs("  3  Processes & CPU       4  Memory management\n");
+    kputs("  5  Files                 6  Users & permissions\n");
+    kputs("  7  Demonstrations\n");
+    console_color(7);
+    kputs("\n  Type a number (1-7), 'help', or a command.\n");
+    console_color(8);
+    kputs("  --------------------------------------------------------------\n");
     console_color(15);
     console_set_header_end();
 }
@@ -136,91 +116,86 @@ static const char *help_name(const char *choice) {
 static void help_category(const char *choice) {
     const char *t = help_name(choice);
     if (t && !strcmp(t, "calculator")) {
-        ui_header("01  NUMBER CONVERSION", "Convert values between common number systems");
-        ui_row("convert", "interactive conversion or direct command");
+        ui_header("01  NUMBER CONVERTER", "Change a value from one number base to another");
+        ui_row("convert", "start the guided converter");
         ui_usage("convert 2A hex dec");
-        ui_info("Bases: 2 binary, 8 octal, 10 decimal, 16 hexadecimal");
+        ui_info("Bases: bin = 2, oct = 8, dec = 10, hex = 16");
+        ui_info("Example: 2A in hex is 42 in decimal.");
         return;
     }
     if (t && !strcmp(t, "system")) {
-        ui_header("02  SYSTEM", "General operating system information");
-        ui_row("about", "show system and kernel information");
-        ui_row("clear", "clear the screen and redraw the header");
-        ui_row("echo <text>", "print a line of text");
-        ui_row("uptime", "show time since startup");
-        ui_row("reboot", "restart the virtual machine");
-        ui_row("halt", "stop the virtual machine");
+        ui_header("02  SYSTEM", "Basic system commands");
+        ui_row("about", "show OS and hardware configuration");
+        ui_row("uptime", "show time since boot");
+        ui_row("clear", "clear the screen");
+        ui_row("echo <text>", "print text");
+        ui_row("reboot / halt", "restart / stop the virtual machine");
         return;
     }
     if (t && !strcmp(t, "process")) {
-        ui_header("03  PROCESSES", "Threads and CPU scheduling");
-        ui_row("ps", "list threads and their current states");
-        ui_row("threads", "run the thread lifecycle example");
-        ui_row("sched", "show scheduler settings and context switches");
-        ui_row("trace on|off", "enable or disable thread state messages");
-        ui_row("kill <tid>", "terminate a thread by its ID");
+        ui_header("03  PROCESSES & CPU", "View and control kernel threads");
+        ui_row("ps", "list threads and their states");
+        ui_row("threads", "run a thread scheduling example");
+        ui_row("sched", "show CPU scheduling settings");
+        ui_row("trace on|off", "show or hide thread trace messages");
+        ui_row("kill <id>", "stop a thread using its ID");
+        ui_info("A thread is a unit of work scheduled by the CPU.");
         return;
     }
     if (t && !strcmp(t, "memory")) {
-        ui_header("04  MEMORY", "Kernel heap management");
-        ui_row("meminfo", "show heap usage and allocation statistics");
-        ui_row("alloc <bytes>", "allocate memory and receive a handle");
-        ui_row("free <handle>", "release a previously allocated handle");
-        ui_row("memtest", "run the out-of-memory safety test");
+        ui_header("04  MEMORY", "Manage temporary kernel memory");
+        ui_row("meminfo", "show heap capacity and usage");
+        ui_row("alloc <bytes>", "reserve memory; returns a handle");
+        ui_row("free <handle>", "release memory using its handle");
+        ui_row("memtest", "run the memory stress test");
+        ui_info("Example: alloc 128, then free 0 (if handle 0 was returned).");
         return;
     }
     if (t && !strcmp(t, "filesystem")) {
-        ui_header("05  FILE SYSTEM", "RAM-based file storage");
-        ui_row("ls", "list files and their permissions");
-        ui_row("touch <file>", "create an empty file");
-        ui_row("write <file> <text>", "replace file contents");
-        ui_row("append <file> <text>", "add text to a file");
-        ui_row("cat <file>", "display file contents");
-        ui_row("rm <file>", "delete a file");
+        ui_header("05  FILES", "Create, read, update and delete RAM files");
+        ui_row("ls", "list stored files");
+        ui_row("touch <name>", "create an empty file");
+        ui_row("write <name> <text>", "replace file contents");
+        ui_row("append <name> <text>", "add text at the end");
+        ui_row("cat <name>", "display file contents");
+        ui_row("rm <name>", "delete a file");
+        ui_info("Files are stored in RAM and reset when the OS restarts.");
         return;
     }
     if (t && !strcmp(t, "security")) {
-        ui_header("06  SECURITY", "Users and file permissions");
-        ui_row("whoami", "show the current user");
-        ui_row("su <user> [pass]", "switch between guest and root");
-        ui_row("chmod <OW> <file>", "set owner and other permissions");
-        ui_info("Permission values: 4 = read, 2 = write, 6 = read/write, 0 = none");
+        ui_header("06  USERS & PERMISSIONS", "Basic account and file access controls");
+        ui_row("whoami", "show the current account");
+        ui_row("su guest", "switch to the guest account");
+        ui_row("su root <password>", "switch to the root account");
+        ui_row("chmod <OW> <file>", "set owner and other access levels");
+        ui_info("Permission digits: 4 read, 2 write, 1 execute; add them together.");
+        ui_info("Example: 6 means read + write. This is a teaching model.");
         return;
     }
     if (t && !strcmp(t, "demo")) {
-        ui_header("07  DEMONSTRATIONS", "Concurrency and synchronization examples");
-        ui_row("race", "compare an unsafe counter with mutex protection");
+        ui_header("07  DEMONSTRATIONS", "See operating-system concepts in action");
+        ui_row("race", "compare unsafe and protected shared data");
         ui_row("deadlock", "create and detect a circular wait");
-        ui_row("deadlock fix", "run the deadlock prevention example");
+        ui_row("deadlock fix", "show a deadlock prevention strategy");
         return;
     }
     if (choice) {
-        ui_error("Unknown section. Choose a number from 1 to 7.");
+        ui_error("Unknown section. Enter a number from 1 to 7.");
         return;
     }
-    ui_header("QUANTUM OS  /  MAIN MENU", "Enter 'help <number>' to open a section");
-    ui_section("01", "NUMBER CONVERSION");
-    ui_row("convert", "convert binary, octal, decimal and hexadecimal");
-    ui_section("02", "SYSTEM");
-    ui_row("about / uptime / clear", "system information and screen controls");
-    ui_row("reboot / halt / echo", "basic system commands");
-    ui_section("03", "PROCESSES");
-    ui_row("ps / threads / sched", "thread status and CPU scheduling");
-    ui_row("trace / kill", "scheduler tracing and thread control");
-    ui_section("04", "MEMORY");
-    ui_row("meminfo / alloc / free", "inspect and manage kernel heap");
-    ui_row("memtest", "memory allocation stress test");
-    ui_section("05", "FILE SYSTEM");
-    ui_row("ls / touch / write / append", "create and update files");
-    ui_row("cat / rm", "read and remove files");
-    ui_section("06", "SECURITY");
-    ui_row("whoami / su / chmod", "user accounts and permissions");
-    ui_section("07", "DEMONSTRATIONS");
-    ui_row("race / deadlock", "race condition, mutex and deadlock");
+    ui_header("HELP / COMMAND MENU", "Enter 1-7 for details, or run a command");
+    ui_row("1", "number conversion");
+    ui_row("2", "system information");
+    ui_row("3", "processes and CPU scheduling");
+    ui_row("4", "memory management");
+    ui_row("5", "file storage");
+    ui_row("6", "users and permissions");
+    ui_row("7", "operating-system demonstrations");
     ui_rule();
-    console_color(7);
-    kputs("  Examples: help 3   |   convert 2A hex dec   |   about\n");
-    console_color(15);
+    ui_usage("convert 2A hex dec");
+    ui_usage("touch notes.txt");
+    ui_usage("write notes.txt Hello");
+    ui_info("Tip: type 'help 5' to see file commands and examples.");
 }
 
 static int split(char *line, char **argv, int max) {
@@ -344,43 +319,21 @@ static void show_conversion(const char *number, int source, int target) {
     } else show_all_bases(value, negative);
 }
 
-static void ask_conversion_field(const char *prompt, char *value, int max) {
-    console_color(11); kputs(prompt);
-    console_color(15); readline(value, max);
-}
-
-static void draw_base_buttons(const char *label, int *row, int *start) {
-    console_color(11); kprintf("%s: ", label);
-    console_get_cursor(start, row);
-    console_color(14); kputs("[ BIN ]  [ OCT ]  [ DEC ]  [ HEX ]\n");
+static int ask_base(const char *step) {
+    char choice[8];
+    u32 selected;
+    console_color(11);
+    kprintf("\\n%s\\n", step);
+    console_color(14);
+    kputs("  1  BIN (binary)       2  OCT (octal)\\n");
+    kputs("  3  DEC (decimal)      4  HEX (hexadecimal)\\n");
+    console_color(7);
+    kputs("  Enter 1-4, or 0 to cancel: ");
     console_color(15);
-}
-
-static int base_from_button(int x, int y, int row, int start) {
-    static const int values[4] = { 2, 8, 10, 16 };
-    if (y != row) return 0;
-    for (int i = 0; i < 4; i++)
-        if (x >= start + i * 9 && x < start + i * 9 + 7) return values[i];
-    return 0;
-}
-
-static int wait_for_base_button(int row, int start) {
-    static const int values[4] = { 2, 8, 10, 16 };
-    for (;;) {
-        int x, y;
-        if (console_get_mouse_click(&x, &y)) {
-            int base = base_from_button(x, y, row, start);
-            if (base) return base;
-        }
-        int key = console_getc_nb();
-        if (key >= '1' && key <= '4') {
-            kprintf("%c\n", key);
-            return values[key - '1'];
-        }
-        if (key == 27) return 0;
-        thread_yield();
-        if (!others_ready()) __asm__ volatile("sti; hlt");
-    }
+    readline(choice, sizeof(choice));
+    if (!parse_u32_arg(choice, &selected) || selected > 4) return 0;
+    if (selected == 0) return -1;
+    return selected == 1 ? 2 : selected == 2 ? 8 : selected == 3 ? 10 : 16;
 }
 
 static void convert_number(int ac, char **av) {
@@ -389,35 +342,60 @@ static void convert_number(int ac, char **av) {
     const char *input;
 
     if (ac == 1) {
-        ask_conversion_field("Number: ", number, sizeof(number));
-        if (!number[0]) { kputs("Conversion cancelled\n"); return; }
-
+        ui_header("NUMBER CONVERTER", "Follow the three prompts below");
         console_color(7);
-        kputs("Select a base with 1-4 or click an option in the QEMU window.\n");
-        int source_row, source_x;
-        draw_base_buttons("FROM", &source_row, &source_x);
-        source = wait_for_base_button(source_row, source_x);
-        if (!source) { kputs("Conversion cancelled.\n"); return; }
+        kputs("  Step 1 of 3 - enter the number you want to convert.\\n");
+        console_color(11);
+        kputs("  Number: ");
+        console_color(15);
+        readline(number, sizeof(number));
+        if (!number[0]) { ui_info("Conversion cancelled."); return; }
 
-        int target_row, target_x;
-        draw_base_buttons("TO", &target_row, &target_x);
-        target = wait_for_base_button(target_row, target_x);
-        if (!target) { kputs("konversi dibatalkan\n"); return; }
+        source = ask_base("Step 2 of 3 - what base is your number written in?");
+        if (source <= 0) { ui_info("Conversion cancelled."); return; }
+        target = ask_base("Step 3 of 3 - choose the base you want as the result.");
+        if (target <= 0) { ui_info("Conversion cancelled."); return; }
         input = number;
     } else if (ac >= 2 && ac <= 4) {
         input = av[1];
         if (ac >= 3) source = number_base(av[2]);
         if (ac == 4) target = number_base(av[3]);
         if ((ac >= 3 && !source) || (ac == 4 && !target)) {
-            kputs("Unknown base. Use bin, oct, dec or hex\n");
+            ui_error("Unknown base. Use bin, oct, dec or hex.");
+            ui_usage("convert 2A hex dec");
             return;
         }
     } else {
-        kputs("Usage: convert [number [source [target]]]\n");
+        ui_usage("convert [number [source [target]]]");
         return;
     }
 
-    show_conversion(input, source, target);
+    u32 value;
+    int negative;
+    if (!parse_number(input, source, &value, &negative)) {
+        ui_error("Invalid number for the selected base, or value exceeds 32 bits.");
+        ui_info("Check the digits: binary uses 0-1, octal 0-7, decimal 0-9, hex 0-9 and A-F.");
+        return;
+    }
+
+    console_color(11);
+    kputs("\\n  CONVERSION RESULT\\n");
+    console_color(8);
+    kputs("  --------------------------------------------------------------\\n");
+    console_color(15);
+    if (target) {
+        char result[35];
+        format_number(value, negative, target, result);
+        kprintf("  %s (base %d)  ->  %s (base %d)\\n",
+                input, source ? source : 10, result, target);
+    } else {
+        show_all_bases(value, negative);
+    }
+    console_color(8);
+    kputs("  --------------------------------------------------------------\\n");
+    console_color(7);
+    kputs("  Run 'convert' to convert another value.\\n");
+    console_color(15);
 }
 
 void shell_run(void) {
@@ -440,6 +418,12 @@ void shell_run(void) {
         int ac = split(line, av, 8);
         if (!ac) continue;
 
+        /* Numbered menu shortcuts: typing 1-7 opens the matching help page. */
+        if (ac == 1 && av[0][1] == 0 && av[0][0] >= '1' && av[0][0] <= '7') {
+            help_category(av[0]);
+            continue;
+        }
+
         const char *c = av[0];
 
         /* ================================================================
@@ -451,7 +435,7 @@ void shell_run(void) {
         /* ================================================================
            02. SYSTEM
            ================================================================ */
-        } else if (!strcmp(c, "help") || !strcmp(c, "menu")) {
+        } else if (!strcmp(c, "help") || !strcmp(c, "menu") || !strcmp(c, "?")) {
             help_category(ac > 1 ? av[1] : 0);
 
         } else if (!strcmp(c, "about")) {
