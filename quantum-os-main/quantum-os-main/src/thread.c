@@ -146,15 +146,24 @@ int thread_kill(int tid) {
 }
 
 void threads_dump(void) {
-    kprintf("TID  NAMA        STATE        CPU(tick)\n");
+    console_color(11);
+    kputs("  TID   NAME            STATE          CPU\n");
+    console_color(8);
+    kputs("  ----  --------------  -------------  --------\n");
+    console_color(15);
+
     for (int i = 0; i < MAX_THREADS; i++) {
         thread_t *t = &table[i];
         if (t->state == T_UNUSED) continue;
-        kprintf("%3d  %s", t->tid, t->name);
-        for (int k = (int)strlen(t->name); k < 12; k++) kputc(' ');
-        kprintf("%s", state_name(t->state));
-        for (int k = (int)strlen(state_name(t->state)); k < 13; k++) kputc(' ');
-        kprintf("%u\n", t->runtime);
+
+        console_color(t == current ? 10 : 15);
+        kprintf("  %3d  %-14s  %-13s  %u\n",
+                t->tid, t->name, state_name(t->state), t->runtime);
+        console_color(15);
     }
-    kprintf("Context switch total: %u, quantum: %d tick (%d ms)\n", ctx_switches, QUANTUM, QUANTUM * 1000 / TICK_HZ);
+
+    console_color(7);
+    kprintf("  context switches: %u | quantum: %d tick (%d ms)\n",
+            ctx_switches, QUANTUM, QUANTUM * 1000 / TICK_HZ);
+    console_color(15);
 }
