@@ -397,7 +397,7 @@ static void convert_number(int ac, char **av) {
         int source_row, source_x;
         draw_base_buttons("FROM", &source_row, &source_x);
         source = wait_for_base_button(source_row, source_x);
-        if (!source) { kputs("konversi dibatalkan\n"); return; }
+        if (!source) { kputs("Conversion cancelled.\n"); return; }
 
         int target_row, target_x;
         draw_base_buttons("TO", &target_row, &target_x);
@@ -513,9 +513,14 @@ void shell_run(void) {
             if (ac < 2) {
                 kprintf("Usage: kill <tid>\n");
             } else {
-                kprintf(thread_kill(atoi(av[1]))
-                    ? "Invalid TID.\n"
-                    : "Thread terminated.\n");
+                u32 tid;
+                if (!parse_u32_arg(av[1], &tid) || tid > 0x7FFFFFFFU) {
+                    kputs("Invalid thread ID.\n");
+                } else {
+                    int result = thread_kill((int)tid);
+                    if (result) kputs("Thread not found or not safe to terminate.\n");
+                    else kputs("Thread terminated.\n");
+                }
             }
 
         /* ================================================================
@@ -675,7 +680,7 @@ void shell_run(void) {
             console_color(12);
             kprintf("Unknown command: '%s'\n", c);
             console_color(15);
-            kputs("Type 'help' to see available commands.\n");
+            kputs("Type 'help' to view the numbered command menu.\n");
         }
     }
 }
