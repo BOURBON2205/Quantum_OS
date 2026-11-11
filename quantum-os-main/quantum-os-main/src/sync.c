@@ -24,6 +24,7 @@ void mutex_init(mutex_t *m, const char *name) {
 }
 
 void mutex_lock(mutex_t *m) {
+    if (!m || m->owner == current) return;
     u32 f = irq_save();
     while (m->locked) {                  /* tunggu sampai dibangunkan, lalu coba ambil lagi */
         current->wait_mutex = m;
@@ -56,6 +57,7 @@ void sem_init(sem_t *s, int n) {
 }
 
 void sem_wait(sem_t *s) {
+    if (!s) return;
     u32 f = irq_save();
     if (s->count > 0) s->count--;
     else { wq_push(&s->q, current); thread_block(); }
@@ -63,6 +65,7 @@ void sem_wait(sem_t *s) {
 }
 
 void sem_post(sem_t *s) {
+    if (!s) return;
     u32 f = irq_save();
     thread_t *w = wq_pop(&s->q);
     if (w) thread_wake(w); else s->count++;
