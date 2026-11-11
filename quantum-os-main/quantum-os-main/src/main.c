@@ -1,4 +1,7 @@
-/* main.c - kmain: inisialisasi semua subsistem lalu jalankan shell */
+/* ============================================================================
+ * main.c
+ * Kernel entry point and subsystem initialization order.
+ * ========================================================================== */
 #include "kernel.h"
 
 void kmain(void) {
@@ -8,11 +11,10 @@ void kmain(void) {
     threads_init();
     fs_init();
     banner();
-    console_color(11);
-    kprintf("[CORE] Number Base Calculator | BIN/OCT/DEC/HEX\n");
     console_color(10);
-    kprintf("[boot] GDT/IDT/PIC/PIT ok | heap ok | scheduler ok | ramfs ok\n\n");
+    kprintf("[BOOT] All kernel subsystems initialized successfully.\n");
     console_color(15);
+    kputs("Type 'help' to open the QuantumOS Command Center.\n\n");
     __asm__ volatile("sti");
     shell_run();
 }
