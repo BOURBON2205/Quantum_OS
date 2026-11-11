@@ -7,7 +7,6 @@
  *   - PS/2 mouse polling
  *   - line editor and command history
  * ========================================================================== */
- *             input keyboard PS/2 + serial (termasuk tombol panah), kprintf, readline dengan edit baris */
 #include "kernel.h"
 
 #define COM1  0x3F8
