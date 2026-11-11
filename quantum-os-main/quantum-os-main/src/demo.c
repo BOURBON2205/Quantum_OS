@@ -24,12 +24,12 @@ static void worker_b(void *a) {
 void demo_threads(void) {
     int old = trace_on; trace_on = 1;
     sem_init(&done, 0);
-    kprintf("Membuat 2 kernel thread (tugas berbeda)...\n");
+    kprintf("  [LAB ] creating 2 kernel threads with different workloads...\n");
     thread_create("worker-A", worker_a, 0);
     thread_create("worker-B", worker_b, 0);
     sem_wait(&done); sem_wait(&done);        /* shell sendiri ikut WAITING di sini */
     trace_on = old;
-    kprintf("Selesai. Status akhir:\n");
+    kprintf("  [ OK ] thread lifecycle demo complete.\n");
     threads_dump();
 }
 
@@ -58,13 +58,13 @@ static void race_once(int lock) {
     thread_create("race-1", race_worker, 0);
     thread_create("race-2", race_worker, 0);
     sem_wait(&done); sem_wait(&done);
-    kprintf("  %s: hasil=%d, seharusnya=%d, context switch=%u -> %s\n",
-            lock ? "DENGAN mutex " : "TANPA sinkronisasi", shared, 2 * RACE_N, ctx_switches - c0,
-            shared == 2 * RACE_N ? "KONSISTEN" : "RACE CONDITION (update hilang)");
+    kprintf("  [%s] result=%d expected=%d switches=%u -> %s\n",
+            lock ? "LOCK" : "RACE", shared, 2 * RACE_N, ctx_switches - c0,
+            shared == 2 * RACE_N ? "CONSISTENT" : "RACE CONDITION");
 }
 
 void demo_race(void) {
-    kprintf("2 thread masing-masing menambah shared counter %d kali.\n", RACE_N);
+    kprintf("  [LAB ] two threads increment a shared counter %d times each.\n", RACE_N);
     race_once(0);
     race_once(1);
 }
@@ -100,17 +100,17 @@ void demo_deadlock(int fix) {
     }
     ordered = fix;
     mutex_init(&ma, "mutex-A"); mutex_init(&mb, "mutex-B"); sem_init(&done, 0);
-    kprintf(fix ? "Skenario SOLUSI: kedua thread mengambil mutex dengan urutan sama (A lalu B).\n"
-                : "Skenario DEADLOCK: dl-1 ambil A->B, dl-2 ambil B->A.\n");
+    kprintf(fix ? "  [LAB ] FIX: both threads acquire A then B.\n"
+                : "  [LAB ] DEADLOCK: dl-1 uses A->B while dl-2 uses B->A.\n");
     thread_create("dl-1", dl_1, 0);
     thread_create("dl-2", dl_2, 0);
     if (fix) {
         sem_wait(&done); sem_wait(&done);
-        kprintf("Kedua thread selesai tanpa deadlock (circular wait dicegah).\n");
+        kprintf("  [ OK ] both threads completed; circular wait was prevented.\n");
     } else {
         thread_sleep(60);                                 /* beri waktu thread saling mengunci */
-        if (!detect_deadlock()) kprintf("Tidak ada deadlock.\n");
-        kprintf("Cek 'ps': kedua thread WAITING selamanya. Bersihkan dengan 'kill <tid>'.\n");
+        if (!detect_deadlock()) kprintf("  [ OK ] no deadlock detected.\n");
+        kprintf("  [ .. ] use 'ps' to inspect WAITING threads; clean them with 'kill <tid>'.\n");
     }
 }
 
@@ -123,10 +123,12 @@ static void print_mem(void) {
 
 void demo_memtest(void) {
     void *p[64]; int n = 0;
-    kprintf("Kondisi awal:\n"); print_mem();
+    kprintf("  [ .. ] initial heap state\n");
+    print_mem();
     while (n < 64 && (p[n] = kmalloc(16 * 1024)) != 0) n++;
-    kprintf("Alokasi 16 KB berulang sampai habis: %d blok berhasil, berikutnya NULL (OOM ditangani, kernel tetap hidup)\n", n);
+    kprintf("  [LAB ] 16 KB allocations succeeded: %d; next allocation returned NULL safely.\n", n);
     print_mem();
     for (int i = 0; i < n; i++) kfree(p[i]);
-    kprintf("Semua blok dilepas:\n"); print_mem();
+    kprintf("  [ OK ] all test blocks released\n");
+    print_mem();
 }
