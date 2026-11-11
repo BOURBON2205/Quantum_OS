@@ -16,9 +16,14 @@ OBJ     = $(patsubst src/%.c,build/%.o,$(SRC_C)) \
           $(patsubst src/%.S,build/%.o,$(SRC_S))
 KERNEL  = build/quantum.elf
 
-.PHONY: all run run-serial iso run-iso debug clean
+.PHONY: all run run-serial iso run-iso debug clean info
 
 all: $(KERNEL)
+
+info:
+	@echo "Target: 32-bit i386 freestanding kernel"
+	@echo "Output: $(KERNEL)"
+	@echo "Run:    make run"
 
 build/%.o: src/%.c src/kernel.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
