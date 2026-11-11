@@ -1,4 +1,7 @@
-#ifndef KERNEL_H
+/* ============================================================================
+ * kernel.h
+ * Shared kernel types, constants, hardware helpers, and subsystem APIs.
+ * ========================================================================== */
 #define KERNEL_H
 #include <stdint.h>
 #include <stddef.h>
@@ -77,8 +80,7 @@ typedef struct thread {
     u32           runtime;
 } thread_t;
 
-#define MAX_THREADS 16
-#define QUANTUM     3                /* tick per time-slice (30 ms) */
+
 
 void      threads_init(void);
 thread_t *thread_create(const char *name, void (*fn)(void *), void *arg);
