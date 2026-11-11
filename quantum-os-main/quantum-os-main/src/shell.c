@@ -323,10 +323,10 @@ static int ask_base(const char *step) {
     char choice[8];
     u32 selected;
     console_color(11);
-    kprintf("\\n%s\\n", step);
+    kprintf("\n%s\n", step);
     console_color(14);
-    kputs("  1  BIN (binary)       2  OCT (octal)\\n");
-    kputs("  3  DEC (decimal)      4  HEX (hexadecimal)\\n");
+    kputs("  1  BIN (binary)       2  OCT (octal)\n");
+    kputs("  3  DEC (decimal)      4  HEX (hexadecimal)\n");
     console_color(7);
     kputs("  Enter 1-4, or 0 to cancel: ");
     console_color(15);
@@ -344,7 +344,7 @@ static void convert_number(int ac, char **av) {
     if (ac == 1) {
         ui_header("NUMBER CONVERTER", "Follow the three prompts below");
         console_color(7);
-        kputs("  Step 1 of 3 - enter the number you want to convert.\\n");
+        kputs("  Step 1 of 3 - enter the number you want to convert.\n");
         console_color(11);
         kputs("  Number: ");
         console_color(15);
@@ -379,22 +379,22 @@ static void convert_number(int ac, char **av) {
     }
 
     console_color(11);
-    kputs("\\n  CONVERSION RESULT\\n");
+    kputs("\n  CONVERSION RESULT\n");
     console_color(8);
-    kputs("  --------------------------------------------------------------\\n");
+    kputs("  --------------------------------------------------------------\n");
     console_color(15);
     if (target) {
         char result[35];
         format_number(value, negative, target, result);
-        kprintf("  %s (base %d)  ->  %s (base %d)\\n",
+        kprintf("  %s (base %d)  ->  %s (base %d)\n",
                 input, source ? source : 10, result, target);
     } else {
         show_all_bases(value, negative);
     }
     console_color(8);
-    kputs("  --------------------------------------------------------------\\n");
+    kputs("  --------------------------------------------------------------\n");
     console_color(7);
-    kputs("  Run 'convert' to convert another value.\\n");
+    kputs("  Run 'convert' to convert another value.\n");
     console_color(15);
 }
 
