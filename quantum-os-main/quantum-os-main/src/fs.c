@@ -1,18 +1,42 @@
-/* fs.c - RAMFS sederhana (CRUD file teks) + kontrol hak akses per user (owner/other, r/w) */
+/* ============================================================================
+ * fs.c
+ * RAM filesystem, CRUD operations, and root/guest access control.
+ * ========================================================================== */
 #include "kernel.h"
 
 #define MAX_FILES 32
 #define NAME_LEN  24
 
-struct file { int used; char name[NAME_LEN]; char *data; u32 size, cap; int owner; u8 p_owner, p_other; };
+struct file {
+    int used;
+    char name[NAME_LEN];
+    char *data;
+    u32 size;
+    u32 cap;
+    int owner;
+    u8 p_owner;
+    u8 p_other;
+};
 static struct file files[MAX_FILES];
-int cur_uid = 1;                                  /* boot sebagai guest */
+int cur_uid = UID_GUEST;                          /* QuantumOS boots as guest. */
 
-const char *uid_name(int uid) { return uid == 0 ? "root" : "guest"; }
+const char *uid_name(int uid) {
+    return uid == UID_ROOT ? "root" : "guest";
+}
 
 int user_switch(const char *name, const char *pass) {
-    if (!strcmp(name, "guest")) { cur_uid = 1; return 0; }
-    if (!strcmp(name, "root"))  { if (pass && !strcmp(pass, "toor")) { cur_uid = 0; return 0; } return E_PERM; }
+    if (!strcmp(name, "guest")) {
+        cur_uid = UID_GUEST;
+        return 0;
+    }
+
+    if (!strcmp(name, "root")) {
+        if (pass && !strcmp(pass, "toor")) {
+            cur_uid = UID_ROOT;
+            return 0;
+        }
+        return E_PERM;
+    }
     return E_NOENT;
 }
 
@@ -23,7 +47,7 @@ static struct file *find(const char *n) {
 
 /* root boleh semuanya; selain itu cek bit owner atau other */
 static int allowed(struct file *f, int want) {
-    if (cur_uid == 0) return 1;
+    if (cur_uid == UID_ROOT) return 1;
     u8 p = (f->owner == cur_uid) ? f->p_owner : f->p_other;
     return (p & want) == want;
 }
@@ -81,7 +105,7 @@ int fs_delete(const char *name) {
 int fs_chmod(const char *name, int owner, int other) {
     struct file *f = find(name);
     if (!f) return E_NOENT;
-    if (cur_uid != 0 && f->owner != cur_uid) return E_PERM;
+    if (cur_uid != UID_ROOT && f->owner != cur_uid) return E_PERM;
     f->p_owner = owner & 7; f->p_other = other & 7;
     return 0;
 }
@@ -116,10 +140,10 @@ const char *fs_err(int e) {
 
 void fs_init(void) {
     memset(files, 0, sizeof(files));
-    create_as("readme.txt", 0, 6, 4);  
+    create_as("readme.txt", UID_ROOT, 6, 4);  
     { int saved = cur_uid; cur_uid = 0;
       fs_write("readme.txt", "Selamat datang di QuantumOS! Ketik 'help' untuk daftar perintah.\n", 0);
-      create_as("secret.txt", 0, 6, 0);
+      create_as("secret.txt", UID_ROOT, 6, 0);
       fs_write("secret.txt", "Data rahasia: hanya root yang boleh membaca berkas ini.\n", 0);
       cur_uid = saved; }
 }
