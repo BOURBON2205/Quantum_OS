@@ -319,24 +319,33 @@ static void show_conversion(const char *number, int source, int target) {
     } else show_all_bases(value, negative);
 }
 
-static int ask_base(const char *step) {
+static int ask_base(void) {
     char choice[8];
     u32 selected;
+
     for (;;) {
         console_color(11);
-        kprintf("\n%s\n", step);
-        console_color(14);
-        kputs("  1  BIN (binary)       2  OCT (octal)\n");
-        kputs("  3  DEC (decimal)      4  HEX (hexadecimal)\n");
+        kputs("\n  STEP 2 - WHAT KIND OF NUMBER DID YOU ENTER?\n");
         console_color(7);
-        kputs("  Enter 1-4, or 0 to cancel: ");
+        kputs("  Choose the format of your ORIGINAL number.\n");
+        console_color(14);
+        kputs("  1  Decimal      everyday numbers: 0 to 9\n");
+        kputs("  2  Binary       only 0 and 1       Example: 1010\n");
+        kputs("  3  Octal        digits 0 to 7      Example: 17\n");
+        kputs("  4  Hexadecimal  0 to 9 and A to F  Example: 2A\n");
+        console_color(7);
+        kputs("  Your choice (1-4, 0 to cancel): ");
         console_color(15);
         readline(choice, sizeof(choice));
+
         if (parse_u32_arg(choice, &selected) && selected == 0) return -1;
-        if (parse_u32_arg(choice, &selected) && selected <= 4) {
-            return selected == 1 ? 2 : selected == 2 ? 8 : selected == 3 ? 10 : 16;
+        if (parse_u32_arg(choice, &selected) && selected >= 1 && selected <= 4) {
+            if (selected == 1) return 10;
+            if (selected == 2) return 2;
+            if (selected == 3) return 8;
+            return 16;
         }
-        ui_error("Please enter 1, 2, 3, 4, or 0 to cancel.");
+        ui_error("Choose 1, 2, 3, 4, or 0 to cancel.");
     }
 }
 
@@ -346,19 +355,24 @@ static void convert_number(int ac, char **av) {
     const char *input;
 
     if (ac == 1) {
-        ui_header("NUMBER CONVERTER", "Follow the three prompts below");
+        ui_header("NUMBER CONVERTER", "One input, four equivalent representations");
         console_color(7);
-        kputs("  Step 1 of 3 - enter the number you want to convert.\n");
+        kputs("  A number base tells you which digits are allowed.\n");
+        kputs("  Example: 1010 is binary; 10 is decimal.\n");
+        console_color(11);
+        kputs("\n  STEP 1 - ENTER YOUR NUMBER\n");
+        console_color(7);
+        kputs("  Type the number exactly as you see it.\n");
+        console_color(14);
+        kputs("  Examples: 42, 101010, 52, 2A\n");
         console_color(11);
         kputs("  Number: ");
         console_color(15);
         readline(number, sizeof(number));
         if (!number[0]) { ui_info("Conversion cancelled."); return; }
 
-        source = ask_base("Step 2 of 3 - what base is your number written in?");
+        source = ask_base();
         if (source <= 0) { ui_info("Conversion cancelled."); return; }
-        target = ask_base("Step 3 of 3 - choose the base you want as the result.");
-        if (target <= 0) { ui_info("Conversion cancelled."); return; }
         input = number;
     } else if (ac >= 2 && ac <= 4) {
         input = av[1];
@@ -377,28 +391,30 @@ static void convert_number(int ac, char **av) {
     u32 value;
     int negative;
     if (!parse_number(input, source, &value, &negative)) {
-        ui_error("Invalid number for the selected base, or value exceeds 32 bits.");
-        ui_info("Check the digits: binary uses 0-1, octal 0-7, decimal 0-9, hex 0-9 and A-F.");
+        ui_error("This value does not match the selected number format.");
+        ui_info("Binary: only 0-1. Octal: 0-7. Decimal: 0-9. Hexadecimal: 0-9 and A-F.");
         return;
     }
 
     console_color(11);
-    kputs("\n  CONVERSION RESULT\n");
+    kputs("\n  CONVERSION RESULT - SAME VALUE, DIFFERENT FORMATS\n");
     console_color(8);
     kputs("  --------------------------------------------------------------\n");
+    console_color(7);
+    kprintf("  Original input : %s (%s)\n", input, base_label(source ? source : 10));
+    kputs("  Equivalent representations:\n");
     console_color(15);
     if (target) {
         char result[35];
         format_number(value, negative, target, result);
-        kprintf("  %s (base %d)  ->  %s (base %d)\n",
-                input, source ? source : 10, result, target);
+        kprintf("  %s (%s)\n", result, base_label(target));
     } else {
         show_all_bases(value, negative);
     }
     console_color(8);
     kputs("  --------------------------------------------------------------\n");
     console_color(7);
-    kputs("  Run 'convert' to convert another value.\n");
+    kputs("  Tip: run 'convert' to try another number.\n");
     console_color(15);
 }
 
