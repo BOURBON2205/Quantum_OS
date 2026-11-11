@@ -50,7 +50,7 @@ static void ui_ok(const char *text) {
     kputs("  [ OK ] ");
     console_color(15);
     kputs(text);
-    kputc("\n"[0]);
+    kputc('\n');
 }
 
 static void ui_info(const char *text) {
@@ -58,7 +58,7 @@ static void ui_info(const char *text) {
     kputs("  [ .. ] ");
     console_color(15);
     kputs(text);
-    kputc("\n"[0]);
+    kputc('\n');
 }
 
 static void ui_error(const char *text) {
@@ -66,7 +66,7 @@ static void ui_error(const char *text) {
     kputs("  [ERR ] ");
     console_color(15);
     kputs(text);
-    kputc("\n"[0]);
+    kputc('\n');
 }
 
 static void ui_usage(const char *text) {
@@ -74,7 +74,7 @@ static void ui_usage(const char *text) {
     kputs("  usage: ");
     console_color(15);
     kputs(text);
-    kputc("\n"[0]);
+    kputc('\n');
 }
 
 static void draw_quantumos(void) {
@@ -95,9 +95,9 @@ static void draw_quantumos(void) {
         for (int letter = 0; letter < 9; letter++) {
             for (int col = 0; col < 7; col++)
                 kputc(font[letters[letter]][row][col] == '#' ? '#' : ' ');
-            if (letter < 8) kputc(" "[0]);
+            if (letter < 8) kputc(' ');
         }
-        kputc("\n"[0]);
+        kputc('\n');
     }
 }
 
@@ -106,20 +106,16 @@ void banner(void) {
     draw_quantumos();
 
     console_color(9);
-    kputs("  +---------------- QUANTUM KERNEL ----------------+   +------+
-");
-    kputs("  |  NUMBER SYSTEMS EXPLORER  |  i386 LABORATORY   |   | 1.0  |
-");
-    kputs("  +-------------------------------------------------+   +------+
-");
+    kputs("  +---------------- QUANTUM KERNEL ----------------+   +------+\n");
+    kputs("  |  NUMBER SYSTEMS EXPLORER  |  i386 LABORATORY   |   | 1.0  |\n");
+    kputs("  +-------------------------------------------------+   +------+\n");
 
     console_color(10);
-    kputs("  [ OK ] GDT/IDT   [ OK ] PIT/PIC   [ OK ] HEAP   [ OK ] RAMFS   [ OK ] ACL
-");
+    kputs("  [ OK ] GDT/IDT   [ OK ] PIT/PIC   [ OK ] HEAP   [ OK ] RAMFS   [ OK ] ACL\n");
 
     console_color(7);
-    kputs("  Specialized Educational Operating System  |  BIN <-> OCT <-> DEC <-> HEX
-");
+    kputs("  Specialized Educational Operating System  |  BIN <-> OCT <-> DEC <-> HEX\n");
+
     console_color(14);
     kputs("  Type ");
     console_color(15);
