@@ -1,6 +1,10 @@
-/* thread.c - TCB, status thread, scheduler Round Robin preemptive + context switch */
+/* ============================================================================
+ * thread.c
+ * Thread control blocks, states, Round Robin scheduling, context switching.
+ * ========================================================================== */
 #include "kernel.h"
 
+/* Each kernel thread receives an 8 KiB private stack. */
 #define STACK_SIZE 8192
 
 extern void switch_context(u32 *old_esp, u32 new_esp);
@@ -35,10 +39,10 @@ static void thread_start(void) {            /* titik masuk pertama setiap thread
 
 void threads_init(void) {
     memset(table, 0, sizeof(table));
-    /* slot 0 = thread utama (shell), memakai stack boot */
+    /* Slot 0 is the shell thread and keeps the bootstrap stack. */
     table[0].tid = next_tid++; strncpy(table[0].name, "shell", 15); table[0].state = T_RUNNING;
     current = &table[0];
-    thread_create("idle", idle_fn, 0);       /* slot 1 */
+    thread_create("idle", idle_fn, 0);       /* Slot 1 is the idle thread. */
 }
 
 thread_t *thread_create(const char *name, void (*fn)(void *), void *arg) {
