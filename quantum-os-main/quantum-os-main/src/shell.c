@@ -78,19 +78,52 @@ static void ui_usage(const char *text) {
 }
 
 void banner(void) {
+    /* Compact welcome screen designed for the 80x25 VGA text display. */
     console_color(11);
-    kputs("\n  +--------------------------------------------------------------------------+\n");
+    kputs("\n  +----------------------------------------------------------------------------+\n");
     console_color(15);
-    kputs("  |                              QUANTUM OS                                  |\n");
+    kputs("  |  QUANTUM OS                                                  VERSION 1.0   |\n");
     console_color(11);
-    kputs("  +--------------------------------------------------------------------------+\n");
+    kputs("  +----------------------------------------------------------------------------+\n");
+
     console_color(7);
-    kputs("  A small 32-bit operating system built for learning and demonstration.\n\n");
+    kputs("  A lightweight 32-bit operating system for learning core OS concepts.\n");
+    kputs("  i386 protected mode  |  Command-line environment  |  QEMU\n\n");
+
+    console_color(11);
+    kputs("  SYSTEM OVERVIEW\n");
+    console_color(8);
+    kputs("  ------------------------------------------------------------------------------\n");
     console_color(10);
-    kputs("  [OK] CPU   [OK] TIMER   [OK] MEMORY   [OK] FILE SYSTEM   [OK] SECURITY\n");
+    kputs("  [OK] CPU      [OK] TIMER      [OK] MEMORY      [OK] RAM FILE SYSTEM\n");
+    kputs("  [OK] THREADS  [OK] SCHEDULER  [OK] ACCESS CONTROL\n\n");
+
+    console_color(11);
+    kputs("  QUICK ACCESS\n");
+    console_color(8);
+    kputs("  ------------------------------------------------------------------------------\n");
+    console_color(14);
+    kputs("   01  Number conversion       02  System information\n");
+    kputs("   03  Processes & scheduling  04  Memory management\n");
+    kputs("   05  File system             06  Security & permissions\n");
+    kputs("   07  OS demonstrations\n\n");
+
     console_color(7);
-    kputs("  Version 1.0  |  i386 protected mode  |  Type 'help' to get started.\n");
-    ui_rule();
+    kputs("  Type ");
+    console_color(14);
+    kputs("help");
+    console_color(7);
+    kputs(" to view commands, or ");
+    console_color(14);
+    kputs("help 01");
+    console_color(7);
+    kputs(" ... ");
+    console_color(14);
+    kputs("help 07");
+    console_color(7);
+    kputs(" for a section.\n");
+    console_color(11);
+    kputs("  ------------------------------------------------------------------------------\n");
     console_color(15);
     console_set_header_end();
 }
@@ -432,7 +465,7 @@ void shell_run(void) {
             ui_header("SYSTEM INFORMATION", "QuantumOS kernel profile");
             ui_row("OS", "QuantumOS v1.0");
             ui_row("Type", "Specialized Educational Operating System");
-            ui_row("Focus", "Number Systems Explorer");
+            ui_row("Interface", "Command-line shell");
             ui_row("CPU", "i386 protected mode");
             ui_row("Scheduler", "Preemptive Round Robin");
             ui_row("Quantum", "3 ticks / 30 ms");
@@ -440,7 +473,7 @@ void shell_run(void) {
             ui_row("Heap", "512 KB first-fit allocator");
             ui_row("Filesystem", "RAMFS");
             ui_row("Access", "root / guest");
-            ui_ok("All major kernel subsystems are available.");
+            ui_ok("Kernel initialization completed.");
 
         } else if (!strcmp(c, "clear")) {
             console_clear();
