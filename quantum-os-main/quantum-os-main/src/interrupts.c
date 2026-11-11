@@ -1,4 +1,7 @@
-/* interrupts.c - GDT, IDT, PIC, PIT (timer 100 Hz), handler exception */
+/* ============================================================================
+ * interrupts.c
+ * GDT, IDT, PIC, PIT, and CPU exception handling.
+ * ========================================================================== */
 #include "kernel.h"
 
 struct gdt_entry { u16 limit_lo, base_lo; u8 base_mid, access, gran, base_hi; } __attribute__((packed));
