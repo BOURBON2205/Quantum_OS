@@ -26,22 +26,33 @@ static void draw_quantumos(void) {
     }
 }
 
-void banner(void) {                                /* kalkulator basis QuantumOS */
+void banner(void) {                                /* identitas dan status awal QuantumOS */
     console_color(11);
     draw_quantumos();
+
     console_color(9);
     kputs(
 "  .--------.        .------( |0> )------.\n"
 "--| Q-CORE |--o----(       Q       )----o---[ i386 ]\n"
 "  '--------'        '------( |1> )------'\n");
-    console_color(11); kputs("NUMBER BASE CALCULATOR\n");
-    console_color(7);  kputs("BIN <-> OCT <-> DEC <-> HEX\n");
+
+    console_color(11); kputs("SPECIALIZED EDUCATIONAL OPERATING SYSTEM\n");
+    console_color(7);  kputs("Number Systems Explorer | BIN <-> OCT <-> DEC <-> HEX\n");
     console_color(15); kprintf("%s v%s | i386 protected mode\n", OS_NAME, OS_VER);
-    console_color(14); kputs("Ketik 'convert' lalu klik basis asal/tujuan | 'help umum'\n");
-    console_color(8);  kputs("-------------------------------------------------------------------------------\n");
+
+    console_color(10);
+    kputs("[ OK ] GDT / IDT       [ OK ] TIMER / PIC\n");
+    kputs("[ OK ] MEMORY          [ OK ] SCHEDULER\n");
+    kputs("[ OK ] RAM FILESYSTEM  [ OK ] SECURITY\n");
+
+    console_color(14);
+    kputs("\nType 'help' to explore the system.\n");
+    console_color(8);
+    kputs("-------------------------------------------------------------------------------\n");
     console_color(15);
     console_set_header_end();
 }
+
 static void row(const char *k, const char *v) {      /* perintah (kuning) + penjelasan (putih) */
     console_color(14); kprintf("%s", k);
     for (int i = (int)strlen(k); i < 20; i++) kputc(' ');
@@ -51,66 +62,96 @@ static void title(const char *t) { console_color(11); kprintf("%s\n", t); consol
 static void note(const char *t)  { console_color(7);  kprintf("%s\n", t); console_color(15); }
 
 static void help(const char *t) {
-    if (t && !strcmp(t, "umum")) {
-        title("[UMUM] info dan kontrol dasar");
-        row("about",          "tampilkan info versi OS");
-        row("clear",          "bersihkan layar (logo tetap di atas)");
-        row("echo <teks>",    "cetak teks. Contoh: echo halo");
-        row("uptime",         "sudah berapa lama OS menyala");
-        row("convert", "pilih angka, asal, dan tujuan dengan klik");
-        note("Contoh langsung: convert 2A hex bin");
-        row("reboot / halt",  "restart OS / hentikan OS");
-    } else if (t && !strcmp(t, "thread")) {
-        title("[THREAD] alur kerja kecil di dalam kernel dan penjadwalannya");
-        row("ps",             "daftar thread + status (READY, RUNNING, WAITING, ...)");
-        row("threads",        "DEMO: jalankan 2 thread, tampilkan perubahan statusnya");
-        row("sched",          "info scheduler: Round Robin, quantum, jumlah ganti thread");
-        row("trace on|off",   "tampilkan/sembunyikan log perubahan status thread");
-        row("kill <tid>",     "hentikan thread. Nomor tid lihat di 'ps'");
-        note("Mulai dari: threads  lalu  ps");
-    } else if (t && !strcmp(t, "sinkron")) {
-        title("[SINKRON] dua thread berbagi data: race condition dan deadlock");
-        row("race",           "DEMO race condition: tanpa lock salah, dengan mutex benar");
-        note("                    (butuh +-20 detik, tunggu sampai kedua hasil muncul)");
-        row("deadlock",       "DEMO: 2 thread saling menunggu, lalu terdeteksi OS");
-        row("deadlock fix",   "DEMO solusi: urutan ambil mutex disamakan -> tidak macet");
-        note("Setelah 'deadlock': ketik ps, lalu kill <tid> untuk membersihkan");
-    } else if (t && !strcmp(t, "memori")) {
-        title("[MEMORI] alokator heap 512 KB");
-        row("meminfo",        "total, terpakai, dan tersedia");
-        row("alloc <byte>",   "minta memori, dapat nomor handle. Contoh: alloc 1000");
-        row("free <handle>",  "lepas memori. Contoh: free 0");
-        row("memtest",        "DEMO: habiskan memori sampai Out of Memory (aman)");
-    } else if (t && !strcmp(t, "berkas")) {
-        title("[BERKAS] sistem berkas di RAM (hilang saat OS mati)");
-        row("ls",                  "daftar berkas, pemilik, dan izin");
-        row("touch <f>",           "buat berkas kosong");
-        row("write <f> <teks>",    "isi berkas (menimpa isi lama)");
-        row("append <f> <teks>",   "tambah teks di akhir berkas");
-        row("cat <f>",             "tampilkan isi berkas");
-        row("rm <f>",              "hapus berkas");
-        note("Contoh: touch a.txt  ->  write a.txt halo  ->  cat a.txt");
-    } else if (t && !strcmp(t, "akses")) {
-        title("[AKSES] user dan izin berkas");
-        row("whoami",              "user saat ini (awal: guest)");
-        row("su <user> [pass]",    "ganti user: root (password: toor) atau guest");
-        row("chmod <OW> <f>",      "atur izin: O=pemilik, W=lainnya (dua digit)");
-        note("                    angka: 4=baca  2=tulis  6=baca+tulis  0=tidak ada");
-        note("Coba: cat secret.txt (ditolak) -> su root toor -> cat secret.txt");
+    if (t && !strcmp(t, "calculator")) {
+        title("[CALCULATOR] Number Systems Explorer");
+        row("convert",             "konversi BIN, OCT, DEC, dan HEX");
+        note("Interaktif: convert lalu pilih basis dengan klik atau tombol 1-4.");
+        note("Contoh: convert 2A hex bin");
+    } else if (t && !strcmp(t, "system")) {
+        title("[SYSTEM] informasi dan kontrol dasar");
+        row("about",               "informasi versi dan komponen kernel");
+        row("clear",               "bersihkan layar, header tetap");
+        row("echo <teks>",         "cetak teks");
+        row("uptime",              "lihat waktu OS aktif");
+        row("reboot",              "restart QuantumOS");
+        row("halt",                "hentikan sistem");
+    } else if (t && !strcmp(t, "process")) {
+        title("[PROCESS] threads dan CPU scheduling");
+        row("ps",                  "daftar thread dan statusnya");
+        row("threads",             "demo pembuatan dan perubahan status thread");
+        row("sched",               "info Round Robin, quantum, dan context switch");
+        row("trace on|off",        "tampilkan/sembunyikan perubahan status thread");
+        row("kill <tid>",          "hentikan thread berdasarkan TID");
+        note("Mulai dari: threads lalu ps");
+    } else if (t && !strcmp(t, "memory")) {
+        title("[MEMORY] kernel heap dan allocation");
+        row("meminfo",             "lihat penggunaan heap 512 KB");
+        row("alloc <byte>",        "alokasikan memori dengan handle");
+        row("free <handle>",       "bebaskan memori berdasarkan handle");
+        row("memtest",             "demo Out of Memory dan keamanan allocator");
+    } else if (t && !strcmp(t, "filesystem")) {
+        title("[FILESYSTEM] RAM filesystem");
+        row("ls",                  "daftar file, pemilik, dan izin");
+        row("touch <f>",           "buat file kosong");
+        row("write <f> <teks>",    "tulis dan ganti isi file");
+        row("append <f> <teks>",   "tambahkan teks ke file");
+        row("cat <f>",             "baca isi file");
+        row("rm <f>",              "hapus file");
+        note("RAMFS bersifat sementara: data hilang setelah reboot.");
+    } else if (t && !strcmp(t, "security")) {
+        title("[SECURITY] users dan file permissions");
+        row("whoami",              "lihat user aktif");
+        row("su <user> [pass]",    "ganti user root atau guest");
+        row("chmod <OW> <f>",      "atur permission owner/other");
+        note("Permission: 4=read, 2=write, 6=read+write, 0=none.");
+        note("Demo: cat secret.txt -> su root toor -> cat secret.txt");
+    } else if (t && !strcmp(t, "demo")) {
+        title("[DEMO] synchronization dan kernel behavior");
+        row("race",                "demo race condition tanpa/dengan mutex");
+        row("deadlock",            "demo deadlock dan deteksi OS");
+        row("deadlock fix",        "demo pencegahan deadlock dengan ordering");
+        note("Setelah demo deadlock, gunakan ps dan kill <tid> bila perlu.");
     } else {
         if (t) { console_color(12); kprintf("Kategori '%s' tidak ada.\n", t); console_color(15); }
-        title("QuantumOS - ketik 'help <kategori>' untuk penjelasan + contoh");
-        row("help umum",    "info OS, bersihkan layar, uptime, restart/matikan");
-        row("convert", "kalkulator klik BIN/OCT/DEC/HEX");
-        row("help thread",  "lihat thread dan statusnya, info scheduler");
-        row("help sinkron", "demo race condition dan deadlock (mutex)");
-        row("help memori",  "lihat, minta, lepas memori; uji Out of Memory");
-        row("help berkas",  "buat, baca, ubah, hapus berkas");
-        row("help akses",   "ganti user dan atur izin berkas");
-        note("Mulai konversi: ketik convert, lalu pilih basis asal dan tujuan");
-        note("Contoh langsung: convert 2A hex bin");
-        note("Demo lain: threads | race | deadlock | memtest");
-        note("Edit baris: kiri/kanan geser kursor, atas/bawah riwayat, Home End Del");
+        title("QUANTUMOS COMMAND CENTER");
+        note("Number Systems Explorer + low-level OS laboratory");
+        kputs("\n");
+
+        console_color(11); kputs("CALCULATOR\n"); console_color(15);
+        row("convert",             "Number base converter");
+
+        console_color(11); kputs("\nSYSTEM\n"); console_color(15);
+        row("about",               "OS and kernel information");
+        row("clear",               "clear screen");
+        row("uptime",              "system uptime");
+
+        console_color(11); kputs("\nPROCESS\n"); console_color(15);
+        row("ps",                  "list threads");
+        row("threads",             "thread demonstration");
+        row("sched",               "scheduler information");
+
+        console_color(11); kputs("\nMEMORY\n"); console_color(15);
+        row("meminfo",             "memory information");
+        row("memtest",             "memory stress test");
+
+        console_color(11); kputs("\nFILESYSTEM\n"); console_color(15);
+        row("ls",                  "list files");
+        row("touch",               "create file");
+        row("write",               "write file");
+        row("cat",                 "read file");
+        row("rm",                  "delete file");
+
+        console_color(11); kputs("\nSECURITY\n"); console_color(15);
+        row("whoami",              "current user");
+        row("su",                  "switch user");
+        row("chmod",               "change permissions");
+
+        console_color(11); kputs("\nDEMO\n"); console_color(15);
+        row("race",                "race condition");
+        row("deadlock",            "deadlock detection");
+
+        note("\nMore details: help calculator | system | process | memory");
+        note("              help filesystem | security | demo");
     }
 }
 
@@ -301,7 +342,7 @@ static void convert_number(int ac, char **av) {
 void shell_run(void) {
     char line[128], orig[128]; char *av[8];
     for (;;) {
-        console_color(cur_uid == 0 ? 12 : 10); kprintf("%s@quantum", uid_name(cur_uid));
+        console_color(cur_uid == 0 ? 12 : 10); kprintf("%s@quantumos", uid_name(cur_uid));
         console_color(14); kprintf("> "); console_color(15);
         readline(line, sizeof(line));
         memcpy(orig, line, sizeof(line));
@@ -310,7 +351,15 @@ void shell_run(void) {
         const char *c = av[0];
       if      (!strcmp(c, "help"))   help(ac > 1 ? av[1] : 0);
         else if (!strcmp(c, "convert")) convert_number(ac, av);
-        else if (!strcmp(c, "about"))  kprintf("%s v%s | i386 protected mode | C + GNU as | preemptive RR | RAMFS\n", OS_NAME, OS_VER);
+        else if (!strcmp(c, "about")) {
+            kprintf("%s v%s\n", OS_NAME, OS_VER);
+            kprintf("Specialized Educational Operating System\n");
+            kprintf("Focus : Number Systems Explorer\n");
+            kprintf("CPU   : i386 protected mode\n");
+            kprintf("Sched : Preemptive Round Robin | quantum %d tick (%d ms)\n", QUANTUM, QUANTUM * 1000 / TICK_HZ);
+            kprintf("Memory: 512 KB kernel heap\n");
+            kprintf("FS    : RAMFS | Security: root / guest\n");
+        }
         else if (!strcmp(c, "clear"))  console_clear();
         else if (!strcmp(c, "echo"))   kprintf("%s\n", rest(orig, 1));
         else if (!strcmp(c, "uptime")) kprintf("Uptime: %u.%02u detik (%u tick)\n", ticks / TICK_HZ, ticks % TICK_HZ, ticks);
