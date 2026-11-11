@@ -1,10 +1,18 @@
-/* mem.c - alokator heap: linked list blok, first-fit, split & coalesce */
+/* ============================================================================
+ * mem.c
+ * 512 KB first-fit kernel heap allocator with split/coalesce.
+ * ========================================================================== */
 #include "kernel.h"
 
 #define HEAP_SIZE (512 * 1024)
 #define MAGIC 0xB0B0CAFE
 
-struct blk { u32 size; u32 free; struct blk *next; u32 magic; };   /* 16 byte */
+struct blk {
+    u32 size;
+    u32 free;
+    struct blk *next;
+    u32 magic;
+}; /* 16-byte block header */
 
 static u8 heap[HEAP_SIZE] __attribute__((aligned(16)));
 static struct blk *head;
@@ -13,7 +21,10 @@ static u32 n_alloc, n_free, n_fail;
 void mem_init(void) {
     head = (struct blk *)heap;
     head->size = HEAP_SIZE - sizeof(struct blk);
-    head->free = 1; head->next = 0; head->magic = MAGIC;
+    head->free = 1;
+    head->next = 0;
+    head->magic = MAGIC;
+    n_alloc = n_free = n_fail = 0;
 }
 
 void *kmalloc(u32 n) {
