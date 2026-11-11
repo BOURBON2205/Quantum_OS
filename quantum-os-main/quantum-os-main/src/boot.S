@@ -1,4 +1,7 @@
-/* boot.S - entry point + Multiboot header (dimuat GRUB / loader multiboot QEMU) */
+/* ============================================================================
+ * boot.S
+ * QuantumOS boot entry, Multiboot header, and bootstrap stack.
+ * ========================================================================== */
 .set MAGIC,    0x1BADB002
 .set FLAGS,    0
 .set CHECKSUM, -(MAGIC + FLAGS)
@@ -12,11 +15,13 @@
 .section .text
 .global _start
 _start:
-    cli
-    mov $stack_top, %esp
-    xor %ebp, %ebp
+    cli                         /* interrupts stay disabled during bootstrap */
+    mov $stack_top, %esp       /* switch to the kernel bootstrap stack */
+    xor %ebp, %ebp              /* establish a clean frame base */
     call kmain
-1:  hlt
+
+1:
+    hlt
     jmp 1b
 
 .section .bss
