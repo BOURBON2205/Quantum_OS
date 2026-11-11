@@ -24,8 +24,12 @@ void mutex_init(mutex_t *m, const char *name) {
 }
 
 void mutex_lock(mutex_t *m) {
-    if (!m || m->owner == current) return;
+    if (!m) return;
     u32 f = irq_save();
+    if (m->owner == current) {
+        irq_restore(f);
+        return;
+    }
     while (m->locked) {                  /* tunggu sampai dibangunkan, lalu coba ambil lagi */
         current->wait_mutex = m;
         wq_push(&m->q, current);
@@ -34,6 +38,25 @@ void mutex_lock(mutex_t *m) {
     }
     m->locked = 1; m->owner = current;
     irq_restore(f);
+}
+
+int mutex_cancel_wait(thread_t *t) {
+    if (!t || !t->wait_mutex) return 0;
+    mutex_t *m = t->wait_mutex;
+    u32 f = irq_save();
+    thread_t *prev = 0, *cur = m->q.head;
+    while (cur && cur != t) { prev = cur; cur = cur->wnext; }
+    if (!cur) {
+        irq_restore(f);
+        return 0;
+    }
+    if (prev) prev->wnext = cur->wnext;
+    else m->q.head = cur->wnext;
+    if (m->q.tail == cur) m->q.tail = prev;
+    cur->wnext = 0;
+    cur->wait_mutex = 0;
+    irq_restore(f);
+    return 1;
 }
 
 void mutex_unlock(mutex_t *m) {
