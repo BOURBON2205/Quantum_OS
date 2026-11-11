@@ -360,14 +360,15 @@ static void convert_number(int ac, char **av) {
     if (ac == 1) {
         ui_header("NUMBER CONVERTER", "One input, four equivalent representations");
         console_color(7);
-        kputs("  A number base tells you which digits are allowed.\n");
-        kputs("  Example: 1010 is binary; 10 is decimal.\n");
+        kputs("  The base tells the OS how to read the digits you type.\n");
+        kputs("  The same value can be written in four different ways.\n");
         console_color(11);
         kputs("\n  STEP 1 - ENTER YOUR NUMBER\n");
         console_color(7);
         kputs("  Type the number exactly as you see it.\n");
         console_color(14);
-        kputs("  Examples: 42, 101010, 52, 2A\n");
+        kputs("  42 = decimal   101010 = binary\n");
+        kputs("  52 = octal     2A = hexadecimal\n");
         console_color(11);
         kputs("  Number: ");
         console_color(15);
