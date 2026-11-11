@@ -302,7 +302,10 @@ static void show_all_bases(u32 value, int negative) {
     format_number(value, negative, 8, oct);
     format_number(value, negative, 10, dec);
     format_number(value, negative, 16, hex);
-    kprintf("BIN: %s\nOCT: %s\nDEC: %s\nHEX: %s\n", bin, oct, dec, hex);
+    kprintf("  Binary       (base 2)  : %s\\n", bin);
+    kprintf("  Octal        (base 8)  : %s\\n", oct);
+    kprintf("  Decimal      (base 10) : %s\\n", dec);
+    kprintf("  Hexadecimal  (base 16) : %s\\n", hex);
 }
 
 static void show_conversion(const char *number, int source, int target) {
