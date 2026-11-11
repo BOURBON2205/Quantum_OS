@@ -1,4 +1,12 @@
-/* console.c - VGA (dengan header tetap + kursor hardware) + serial COM1,
+/* ============================================================================
+ * console.c
+ * QuantumOS console layer:
+ *   - VGA text output
+ *   - COM1 serial output
+ *   - PS/2 keyboard input
+ *   - PS/2 mouse polling
+ *   - line editor and command history
+ * ========================================================================== */
  *             input keyboard PS/2 + serial (termasuk tombol panah), kprintf, readline dengan edit baris */
 #include "kernel.h"
 
