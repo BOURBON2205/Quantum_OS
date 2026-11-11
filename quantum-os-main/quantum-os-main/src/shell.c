@@ -471,7 +471,7 @@ void shell_run(void) {
            02. SYSTEM
            ================================================================ */
         } else if (!strcmp(c, "help")) {
-            help(ac > 1 ? av[1] : 0);
+            help_category(ac > 1 ? av[1] : 0);
 
         } else if (!strcmp(c, "about")) {
             ui_header("SYSTEM INFORMATION", "QuantumOS kernel profile");
