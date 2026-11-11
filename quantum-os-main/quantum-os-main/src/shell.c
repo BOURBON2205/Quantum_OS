@@ -1,187 +1,266 @@
-/* shell.c - CLI QuantumOS */
+/* ============================================================================
+ * shell.c
+ * QuantumOS command shell and Number Systems Explorer.
+ * ========================================================================== */
 #include "kernel.h"
 
-static void *h_ptr[16]; static u32 h_sz[16];
+static void *h_ptr[16];
+static u32 h_sz[16];
+
+/* ---------- visual helpers ---------- */
+
+static void ui_rule(void) {
+    console_color(8);
+    kputs("-------------------------------------------------------------------------------\n");
+    console_color(15);
+}
+
+static void ui_header(const char *name, const char *subtitle) {
+    console_color(11);
+    kputs("\n  ");
+    kputs(name);
+    kputs("\n");
+    console_color(7);
+    kputs("  ");
+    kputs(subtitle);
+    kputs("\n");
+    ui_rule();
+}
+
+static void ui_section(const char *id, const char *name) {
+    console_color(11);
+    kprintf("\n  [%s] %s\n", id, name);
+    console_color(8);
+    kputs("  -----------------------------------------------------------------------\n");
+    console_color(15);
+}
+
+static void ui_row(const char *key, const char *value) {
+    int len = (int)strlen(key);
+    console_color(14);
+    kprintf("  %s", key);
+    for (int i = len; i < 20; i++) kputc(" "[0]);
+    console_color(15);
+    kputs(value);
+    kputc("\n"[0]);
+}
+
+static void ui_ok(const char *text) {
+    console_color(10);
+    kputs("  [ OK ] ");
+    console_color(15);
+    kputs(text);
+    kputc("\n"[0]);
+}
+
+static void ui_info(const char *text) {
+    console_color(7);
+    kputs("  [ .. ] ");
+    console_color(15);
+    kputs(text);
+    kputc("\n"[0]);
+}
+
+static void ui_error(const char *text) {
+    console_color(12);
+    kputs("  [ERR ] ");
+    console_color(15);
+    kputs(text);
+    kputc("\n"[0]);
+}
+
+static void ui_usage(const char *text) {
+    console_color(14);
+    kputs("  usage: ");
+    console_color(15);
+    kputs(text);
+    kputc("\n"[0]);
+}
 
 static void draw_quantumos(void) {
-    static const char font[9][7][8] = {
-        { ".#####.", "##...##", "##...##", "##...##", "##.#.##", "##..###", ".######" }, /* Q */
-        { "##...##", "##...##", "##...##", "##...##", "##...##", "##...##", ".#####." }, /* U */
-        { "..###..", ".##.##.", "##...##", "##...##", "#######", "##...##", "##...##" }, /* A */
-        { "##...##", "###..##", "####.##", "##.####", "##..###", "##...##", "##...##" }, /* N */
-        { "#######", "...#...", "...#...", "...#...", "...#...", "...#...", "...#..." }, /* T */
-        { "##...##", "###.###", "#######", "##.#.##", "##...##", "##...##", "##...##" }, /* M */
-        { ".#####.", "##...##", "##...##", "##...##", "##...##", "##...##", ".#####." }, /* O */
-        { ".######", "##.....", "##.....", ".#####.", ".....##", ".....##", "######." }, /* S */
+    static const char font[8][7][8] = {
+        { ".#####.", "##...##", "##...##", "##...##", "##.#.##", "##..###", ".######" },
+        { "##...##", "##...##", "##...##", "##...##", "##...##", "##...##", ".#####." },
+        { "..###..", ".##.##.", "##...##", "##...##", "#######", "##...##", "##...##" },
+        { "##...##", "###..##", "####.##", "##.####", "##..###", "##...##", "##...##" },
+        { "#######", "...#...", "...#...", "...#...", "...#...", "...#...", "...#..." },
+        { "##...##", "###.###", "#######", "##.#.##", "##...##", "##...##", "##...##" },
+        { ".#####.", "##...##", "##...##", "##...##", "##...##", "##...##", ".#####." },
+        { ".######", "##.....", "##.....", ".#####.", ".....##", ".....##", "######." }
     };
     static const u8 letters[9] = { 0, 1, 2, 3, 4, 1, 5, 6, 7 };
+
     for (int row = 0; row < 7; row++) {
         kputs("    ");
         for (int letter = 0; letter < 9; letter++) {
             for (int col = 0; col < 7; col++)
-                kputc(font[letters[letter]][row][col] == '#' ? '#' : ' ');
-            if (letter < 8) kputc(' ');
+                kputc(font[letters[letter]][row][col] == "#" [0] ? "#" [0] : " "[0]);
+            if (letter < 8) kputc(" "[0]);
         }
-        kputc('\n');
+        kputc("\n"[0]);
     }
 }
 
-void banner(void) {                                /* identitas dan status awal QuantumOS */
+void banner(void) {
     console_color(11);
     draw_quantumos();
 
     console_color(9);
-    kputs(
-"  .--------.        .------( |0> )------.\n"
-"--| Q-CORE |--o----(       Q       )----o---[ i386 ]\n"
-"  '--------'        '------( |1> )------'\n");
-
-    console_color(11); kputs("SPECIALIZED EDUCATIONAL OPERATING SYSTEM\n");
-    console_color(7);  kputs("Number Systems Explorer | BIN <-> OCT <-> DEC <-> HEX\n");
-    console_color(15); kprintf("%s v%s | i386 protected mode\n", OS_NAME, OS_VER);
+    kputs("  +---------------- QUANTUM KERNEL ----------------+   +------+
+");
+    kputs("  |  NUMBER SYSTEMS EXPLORER  |  i386 LABORATORY   |   | 1.0  |
+");
+    kputs("  +-------------------------------------------------+   +------+
+");
 
     console_color(10);
-    kputs("[ OK ] GDT / IDT       [ OK ] TIMER / PIC\n");
-    kputs("[ OK ] MEMORY          [ OK ] SCHEDULER\n");
-    kputs("[ OK ] RAM FILESYSTEM  [ OK ] SECURITY\n");
+    kputs("  [ OK ] GDT/IDT   [ OK ] PIT/PIC   [ OK ] HEAP   [ OK ] RAMFS   [ OK ] ACL
+");
 
+    console_color(7);
+    kputs("  Specialized Educational Operating System  |  BIN <-> OCT <-> DEC <-> HEX
+");
     console_color(14);
-    kputs("\nType 'help' to explore the system.\n");
-    console_color(8);
-    kputs("-------------------------------------------------------------------------------\n");
+    kputs("  Type ");
+    console_color(15);
+    kputs("'help'");
+    console_color(14);
+    kputs(" for the command center.\n");
+
+    ui_rule();
     console_color(15);
     console_set_header_end();
 }
 
-static void row(const char *k, const char *v) {      /* perintah (kuning) + penjelasan (putih) */
-    console_color(14); kprintf("%s", k);
-    for (int i = (int)strlen(k); i < 20; i++) kputc(' ');
-    console_color(15); kprintf("%s\n", v);
-}
-static void title(const char *t) { console_color(11); kprintf("%s\n", t); console_color(15); }
-static void note(const char *t)  { console_color(7);  kprintf("%s\n", t); console_color(15); }
+/* ---------- command center ---------- */
 
-static void help(const char *t) {
+static void help_category(const char *t) {
     if (t && !strcmp(t, "calculator")) {
-        title("[01] CALCULATOR");
-        note("Number Systems Explorer");
-        row("convert", "konversi BIN, OCT, DEC, dan HEX");
-        note("Contoh: convert 2A hex bin");
-        note("Interaktif: pilih basis dengan klik atau tombol 1-4.");
-    } else if (t && !strcmp(t, "system")) {
-        title("[02] SYSTEM");
-        row("about", "informasi QuantumOS dan komponen kernel");
-        row("clear", "bersihkan layar");
-        row("echo <teks>", "tampilkan teks");
-        row("uptime", "lihat waktu OS aktif");
-        row("reboot", "restart QuantumOS");
-        row("halt", "hentikan sistem");
-    } else if (t && !strcmp(t, "process")) {
-        title("[03] PROCESS");
-        note("Threads dan CPU scheduling");
-        row("ps", "daftar thread dan status");
-        row("threads", "demo thread dan perubahan status");
-        row("sched", "informasi Round Robin dan context switch");
-        row("trace on|off", "aktifkan atau matikan trace thread");
-        row("kill <tid>", "hentikan thread berdasarkan TID");
-        note("Urutan demo: threads -> ps -> sched");
-    } else if (t && !strcmp(t, "memory")) {
-        title("[04] MEMORY");
-        note("Kernel heap: 512 KB");
-        row("meminfo", "lihat penggunaan dan statistik heap");
-        row("alloc <byte>", "alokasikan memori dan dapatkan handle");
-        row("free <handle>", "bebaskan memori berdasarkan handle");
-        row("memtest", "uji allocator sampai Out of Memory");
-    } else if (t && !strcmp(t, "filesystem")) {
-        title("[05] FILESYSTEM");
-        note("RAMFS: data bersifat sementara");
-        row("ls", "daftar file, owner, dan permission");
-        row("touch <file>", "buat file kosong");
-        row("write <file> <teks>", "tulis atau ganti isi file");
-        row("append <file> <teks>", "tambahkan teks ke file");
-        row("cat <file>", "baca isi file");
-        row("rm <file>", "hapus file");
-        note("Contoh: touch a.txt -> write a.txt halo -> cat a.txt");
-    } else if (t && !strcmp(t, "security")) {
-        title("[06] SECURITY");
-        note("Access control: root dan guest");
-        row("whoami", "lihat user aktif");
-        row("su <user> [pass]", "ganti user");
-        row("chmod <OW> <file>", "atur permission owner/other");
-        note("Permission: 4=read  2=write  6=read+write  0=none");
-        note("Demo: cat secret.txt -> su root toor -> cat secret.txt");
-    } else if (t && !strcmp(t, "demo")) {
-        title("[07] KERNEL DEMO");
-        note("Demonstrasi konsep concurrency dan synchronization");
-        row("race", "demo race condition tanpa dan dengan mutex");
-        row("deadlock", "demo deadlock dan deteksi");
-        row("deadlock fix", "demo pencegahan deadlock dengan lock ordering");
-    } else {
-        if (t) {
-            console_color(12);
-            kprintf("Kategori '%s' tidak ditemukan.\n", t);
-            console_color(15);
-            kputs("\n");
-        }
-
-        title("QUANTUMOS COMMAND CENTER");
-        note("Specialized Educational Operating System");
-        note("Focus: Number Systems Explorer + Low-Level OS Laboratory");
-        kputs("\n");
-
-        console_color(11); kputs("[01] CALCULATOR\n"); console_color(15);
-        row("convert", "BIN <-> OCT <-> DEC <-> HEX");
-
-        console_color(11); kputs("\n[02] SYSTEM\n"); console_color(15);
-        row("about", "OS dan kernel information");
-        row("clear", "clear screen");
-        row("uptime", "system uptime");
-        row("reboot", "restart OS");
-        row("halt", "shutdown OS");
-
-        console_color(11); kputs("\n[03] PROCESS\n"); console_color(15);
-        row("ps", "list threads");
-        row("threads", "thread demonstration");
-        row("sched", "scheduler information");
-
-        console_color(11); kputs("\n[04] MEMORY\n"); console_color(15);
-        row("meminfo", "memory information");
-        row("alloc", "allocate memory");
-        row("free", "release memory");
-        row("memtest", "Out of Memory demonstration");
-
-        console_color(11); kputs("\n[05] FILESYSTEM\n"); console_color(15);
-        row("ls", "list files");
-        row("touch", "create file");
-        row("write", "write file");
-        row("append", "append file");
-        row("cat", "read file");
-        row("rm", "delete file");
-
-        console_color(11); kputs("\n[06] SECURITY\n"); console_color(15);
-        row("whoami", "current user");
-        row("su", "switch user");
-        row("chmod", "change permissions");
-
-        console_color(11); kputs("\n[07] KERNEL DEMO\n"); console_color(15);
-        row("race", "race condition");
-        row("deadlock", "deadlock detection");
-        row("deadlock fix", "deadlock prevention");
-
-        console_color(8);
-        kputs("\n--------------------------------------------------------------------------\n");
-        console_color(14);
-        kputs("HELP: ");
-        console_color(15);
-        kputs("help calculator | system | process | memory\n");
-        kputs("      help filesystem | security | demo\n");
-        console_color(7);
-        kputs("Tip: start with 'convert' or 'about'.\n");
-        console_color(15);
+        ui_header("CALCULATOR", "Number Systems Explorer");
+        ui_row("convert", "convert BIN, OCT, DEC and HEX");
+        ui_usage("convert 2A hex bin");
+        ui_info("Interactive mode: choose source and target base with mouse or 1-4.");
+        return;
     }
+
+    if (t && !strcmp(t, "system")) {
+        ui_header("SYSTEM", "Kernel and machine controls");
+        ui_row("about", "show OS architecture and subsystem summary");
+        ui_row("clear", "redraw the terminal");
+        ui_row("echo <text>", "print text");
+        ui_row("uptime", "show system uptime");
+        ui_row("reboot", "restart the machine");
+        ui_row("halt", "stop the CPU");
+        return;
+    }
+
+    if (t && !strcmp(t, "process")) {
+        ui_header("PROCESS", "Threads and CPU scheduling");
+        ui_row("ps", "list threads and their states");
+        ui_row("threads", "run the thread lifecycle demo");
+        ui_row("sched", "show Round Robin scheduler data");
+        ui_row("trace on|off", "toggle scheduler trace");
+        ui_row("kill <tid>", "terminate a thread");
+        ui_info("Suggested lab: threads -> ps -> sched");
+        return;
+    }
+
+    if (t && !strcmp(t, "memory")) {
+        ui_header("MEMORY", "512 KB kernel heap laboratory");
+        ui_row("meminfo", "show allocator statistics");
+        ui_row("alloc <byte>", "allocate memory and create a handle");
+        ui_row("free <handle>", "release a handle");
+        ui_row("memtest", "fill the heap until Out of Memory");
+        return;
+    }
+
+    if (t && !strcmp(t, "filesystem")) {
+        ui_header("FILESYSTEM", "RAMFS: simple in-memory storage");
+        ui_row("ls", "list files, owners and permissions");
+        ui_row("touch <file>", "create an empty file");
+        ui_row("write <file> <text>", "replace file contents");
+        ui_row("append <file> <text>", "append to file contents");
+        ui_row("cat <file>", "read a file");
+        ui_row("rm <file>", "delete a file");
+        ui_usage("touch a.txt -> write a.txt hello -> cat a.txt");
+        return;
+    }
+
+    if (t && !strcmp(t, "security")) {
+        ui_header("SECURITY", "Root/guest access control");
+        ui_row("whoami", "show current user");
+        ui_row("su <user> [pass]", "switch user");
+        ui_row("chmod <OW> <file>", "set owner/other permissions");
+        ui_info("Permissions: 4=read  2=write  6=read+write  0=none");
+        ui_usage("su root toor");
+        return;
+    }
+
+    if (t && !strcmp(t, "demo")) {
+        ui_header("KERNEL DEMO", "Concurrency and synchronization laboratory");
+        ui_row("race", "compare race condition with mutex protection");
+        ui_row("deadlock", "create and detect a deadlock");
+        ui_row("deadlock fix", "prevent deadlock with lock ordering");
+        return;
+    }
+
+    if (t) {
+        ui_error("Unknown help category.");
+        kprintf("  No help page exists for: %s\n", t);
+    }
+
+    ui_header("QUANTUMOS COMMAND CENTER", "Number Systems Explorer + Low-Level OS Laboratory");
+    ui_section("01", "CALCULATOR");
+    ui_row("convert", "BIN <-> OCT <-> DEC <-> HEX");
+
+    ui_section("02", "SYSTEM");
+    ui_row("about", "OS and kernel summary");
+    ui_row("clear", "redraw terminal");
+    ui_row("uptime", "system uptime");
+    ui_row("reboot / halt", "machine control");
+
+    ui_section("03", "PROCESS");
+    ui_row("ps / threads", "thread inspection and demo");
+    ui_row("sched", "scheduler and context switches");
+    ui_row("trace on|off", "thread trace");
+    ui_row("kill <tid>", "terminate thread");
+
+    ui_section("04", "MEMORY");
+    ui_row("meminfo", "heap statistics");
+    ui_row("alloc / free", "manual allocation handles");
+    ui_row("memtest", "Out of Memory demonstration");
+
+    ui_section("05", "FILESYSTEM");
+    ui_row("ls / touch / cat", "RAMFS file operations");
+    ui_row("write / append / rm", "modify or delete files");
+
+    ui_section("06", "SECURITY");
+    ui_row("whoami / su", "user and access control");
+    ui_row("chmod", "file permissions");
+
+    ui_section("07", "KERNEL DEMO");
+    ui_row("race", "race condition + mutex");
+    ui_row("deadlock / fix", "deadlock detection + prevention");
+
+    ui_rule();
+    console_color(7);
+    kputs("  Tip: ");
+    console_color(14);
+    kputs("convert 2A hex dec");
+    console_color(7);
+    kputs("  |  ");
+    console_color(14);
+    kputs("about");
+    console_color(7);
+    kputs("  |  ");
+    console_color(14);
+    kputs("help process");
+    console_color(7);
+    kputs("\n");
+    console_color(15);
 }
 
-static int split(char *line, char **argv, int max) {
+static int split(char *line, char **argv, int max) {static int split(char *line, char **argv, int max) {
     int n = 0;
     while (*line && n < max) {
         while (*line == ' ') *line++ = 0;
@@ -373,10 +452,9 @@ void shell_run(void) {
         /* ================================================================
            PROMPT
            ================================================================ */
-        console_color(cur_uid == 0 ? 12 : 10);
-        kprintf("%s@quantumos", uid_name(cur_uid));
-        console_color(14);
-        kprintf("> ");
+        console_color(cur_uid == UID_ROOT ? 12 : 10);
+        kprintf("%s@quantumos:~%c ", uid_name(cur_uid),
+                cur_uid == UID_ROOT ? "#" : "$");
         console_color(15);
 
         readline(line, sizeof(line));
@@ -400,15 +478,18 @@ void shell_run(void) {
             help(ac > 1 ? av[1] : 0);
 
         } else if (!strcmp(c, "about")) {
-            kprintf("%s v%s\n", OS_NAME, OS_VER);
-            kprintf("Type   : Specialized Educational Operating System\n");
-            kprintf("Focus  : Number Systems Explorer\n");
-            kprintf("CPU    : i386 protected mode\n");
-            kprintf("Sched  : Preemptive Round Robin | quantum %d tick (%d ms)\n",
-                    QUANTUM, QUANTUM * 1000 / TICK_HZ);
-            kprintf("Memory : 512 KB kernel heap\n");
-            kprintf("FS     : RAMFS\n");
-            kprintf("Access : root / guest\n");
+            ui_header("SYSTEM INFORMATION", "QuantumOS kernel profile");
+            ui_row("OS", "QuantumOS v1.0");
+            ui_row("Type", "Specialized Educational Operating System");
+            ui_row("Focus", "Number Systems Explorer");
+            ui_row("CPU", "i386 protected mode");
+            ui_row("Scheduler", "Preemptive Round Robin");
+            ui_row("Quantum", "3 ticks / 30 ms");
+            ui_row("Timer", "PIT 100 Hz");
+            ui_row("Heap", "512 KB first-fit allocator");
+            ui_row("Filesystem", "RAMFS");
+            ui_row("Access", "root / guest");
+            ui_ok("All major kernel subsystems are available.");
 
         } else if (!strcmp(c, "clear")) {
             console_clear();
