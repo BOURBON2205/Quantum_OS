@@ -1,6 +1,6 @@
 /* ============================================================================
  * shell.c
- * QuantumOS command shell and Number Systems Explorer.
+ * QuantumOS command shell and Command-line interface.
  * ========================================================================== */
 #include "kernel.h"
 
@@ -77,182 +77,149 @@ static void ui_usage(const char *text) {
     kputc('\n');
 }
 
-static void draw_quantumos(void) {
-    static const char font[8][7][8] = {
-        { ".#####.", "##...##", "##...##", "##...##", "##.#.##", "##..###", ".######" },
-        { "##...##", "##...##", "##...##", "##...##", "##...##", "##...##", ".#####." },
-        { "..###..", ".##.##.", "##...##", "##...##", "#######", "##...##", "##...##" },
-        { "##...##", "###..##", "####.##", "##.####", "##..###", "##...##", "##...##" },
-        { "#######", "...#...", "...#...", "...#...", "...#...", "...#...", "...#..." },
-        { "##...##", "###.###", "#######", "##.#.##", "##...##", "##...##", "##...##" },
-        { ".#####.", "##...##", "##...##", "##...##", "##...##", "##...##", ".#####." },
-        { ".######", "##.....", "##.....", ".#####.", ".....##", ".....##", "######." }
-    };
-    static const u8 letters[9] = { 0, 1, 2, 3, 4, 1, 5, 6, 7 };
-
-    for (int row = 0; row < 7; row++) {
-        kputs("    ");
-        for (int letter = 0; letter < 9; letter++) {
-            for (int col = 0; col < 7; col++)
-                kputc(font[letters[letter]][row][col] == '#' ? '#' : ' ');
-            if (letter < 8) kputc(' ');
-        }
-        kputc('\n');
-    }
-}
-
 void banner(void) {
+    /* Compact welcome header leaves room for command output on 80x25 VGA. */
     console_color(11);
-    draw_quantumos();
-
-    console_color(9);
-    kputs("  +---------------- QUANTUM KERNEL ----------------+   +------+\n");
-    kputs("  |  NUMBER SYSTEMS EXPLORER  |  i386 LABORATORY   |   | 1.0  |\n");
-    kputs("  +-------------------------------------------------+   +------+\n");
-
-    console_color(10);
-    kputs("  [ OK ] GDT/IDT   [ OK ] PIT/PIC   [ OK ] HEAP   [ OK ] RAMFS   [ OK ] ACL\n");
+    kputs("\n  +----------------------------------------------------------------------------+\n");
+    console_color(15);
+    kputs("  |  QUANTUM OS                                                  VERSION 1.0   |\n");
+    console_color(11);
+    kputs("  +----------------------------------------------------------------------------+\n");
 
     console_color(7);
-    kputs("  Specialized Educational Operating System  |  BIN <-> OCT <-> DEC <-> HEX\n");
+    kputs("  A lightweight 32-bit operating system for learning core OS concepts.\n");
+    console_color(10);
+    kputs("  [OK] CPU  [OK] TIMER  [OK] MEMORY  [OK] THREADS  [OK] RAMFS  [OK] SECURITY\n");
 
+    console_color(11);
+    kputs("  MAIN MENU\n");
+    console_color(8);
+    kputs("  ------------------------------------------------------------------------------\n");
     console_color(14);
+    kputs("   01  Number conversion       02  System information\n");
+    kputs("   03  Processes & scheduling  04  Memory management\n");
+    kputs("   05  File system             06  Security & permissions\n");
+    kputs("   07  OS demonstrations\n");
+
+    console_color(7);
     kputs("  Type ");
-    console_color(15);
-    kputs("'help'");
     console_color(14);
-    kputs(" for the command center.\n");
-
-    ui_rule();
+    kputs("help");
+    console_color(7);
+    kputs(" for commands, or ");
+    console_color(14);
+    kputs("help 1");
+    console_color(7);
+    kputs(" to ");
+    console_color(14);
+    kputs("help 7");
+    console_color(7);
+    kputs(" for details.\n");
+    console_color(11);
+    kputs("  ------------------------------------------------------------------------------\n");
     console_color(15);
     console_set_header_end();
 }
 
-/* ---------- command center ---------- */
+static const char *help_name(const char *choice) {
+    if (!choice) return 0;
+    if (!strcmp(choice, "1")) return "calculator";
+    if (!strcmp(choice, "2")) return "system";
+    if (!strcmp(choice, "3")) return "process";
+    if (!strcmp(choice, "4")) return "memory";
+    if (!strcmp(choice, "5")) return "filesystem";
+    if (!strcmp(choice, "6")) return "security";
+    if (!strcmp(choice, "7")) return "demo";
+    return choice;
+}
 
-static void help_category(const char *t) {
+static void help_category(const char *choice) {
+    const char *t = help_name(choice);
     if (t && !strcmp(t, "calculator")) {
-        ui_header("CALCULATOR", "Number Systems Explorer");
-        ui_row("convert", "convert BIN, OCT, DEC and HEX");
-        ui_usage("convert 2A hex bin");
-        ui_info("Interactive mode: choose source and target base with mouse or 1-4.");
+        ui_header("01  NUMBER CONVERSION", "Convert values between common number systems");
+        ui_row("convert", "interactive conversion or direct command");
+        ui_usage("convert 2A hex dec");
+        ui_info("Bases: 2 binary, 8 octal, 10 decimal, 16 hexadecimal");
         return;
     }
-
     if (t && !strcmp(t, "system")) {
-        ui_header("SYSTEM", "Kernel and machine controls");
-        ui_row("about", "show OS architecture and subsystem summary");
-        ui_row("clear", "redraw the terminal");
-        ui_row("echo <text>", "print text");
-        ui_row("uptime", "show system uptime");
-        ui_row("reboot", "restart the machine");
-        ui_row("halt", "stop the CPU");
+        ui_header("02  SYSTEM", "General operating system information");
+        ui_row("about", "show system and kernel information");
+        ui_row("clear", "clear the screen and redraw the header");
+        ui_row("echo <text>", "print a line of text");
+        ui_row("uptime", "show time since startup");
+        ui_row("reboot", "restart the virtual machine");
+        ui_row("halt", "stop the virtual machine");
         return;
     }
-
     if (t && !strcmp(t, "process")) {
-        ui_header("PROCESS", "Threads and CPU scheduling");
-        ui_row("ps", "list threads and their states");
-        ui_row("threads", "run the thread lifecycle demo");
-        ui_row("sched", "show Round Robin scheduler data");
-        ui_row("trace on|off", "toggle scheduler trace");
-        ui_row("kill <tid>", "terminate a thread");
-        ui_info("Suggested lab: threads -> ps -> sched");
+        ui_header("03  PROCESSES", "Threads and CPU scheduling");
+        ui_row("ps", "list threads and their current states");
+        ui_row("threads", "run the thread lifecycle example");
+        ui_row("sched", "show scheduler settings and context switches");
+        ui_row("trace on|off", "enable or disable thread state messages");
+        ui_row("kill <tid>", "terminate a thread by its ID");
         return;
     }
-
     if (t && !strcmp(t, "memory")) {
-        ui_header("MEMORY", "512 KB kernel heap laboratory");
-        ui_row("meminfo", "show allocator statistics");
-        ui_row("alloc <byte>", "allocate memory and create a handle");
-        ui_row("free <handle>", "release a handle");
-        ui_row("memtest", "fill the heap until Out of Memory");
+        ui_header("04  MEMORY", "Kernel heap management");
+        ui_row("meminfo", "show heap usage and allocation statistics");
+        ui_row("alloc <bytes>", "allocate memory and receive a handle");
+        ui_row("free <handle>", "release a previously allocated handle");
+        ui_row("memtest", "run the out-of-memory safety test");
         return;
     }
-
     if (t && !strcmp(t, "filesystem")) {
-        ui_header("FILESYSTEM", "RAMFS: simple in-memory storage");
-        ui_row("ls", "list files, owners and permissions");
+        ui_header("05  FILE SYSTEM", "RAM-based file storage");
+        ui_row("ls", "list files and their permissions");
         ui_row("touch <file>", "create an empty file");
         ui_row("write <file> <text>", "replace file contents");
-        ui_row("append <file> <text>", "append to file contents");
-        ui_row("cat <file>", "read a file");
+        ui_row("append <file> <text>", "add text to a file");
+        ui_row("cat <file>", "display file contents");
         ui_row("rm <file>", "delete a file");
-        ui_usage("touch a.txt -> write a.txt hello -> cat a.txt");
         return;
     }
-
     if (t && !strcmp(t, "security")) {
-        ui_header("SECURITY", "Root/guest access control");
-        ui_row("whoami", "show current user");
-        ui_row("su <user> [pass]", "switch user");
-        ui_row("chmod <OW> <file>", "set owner/other permissions");
-        ui_info("Permissions: 4=read  2=write  6=read+write  0=none");
-        ui_usage("su root toor");
+        ui_header("06  SECURITY", "Users and file permissions");
+        ui_row("whoami", "show the current user");
+        ui_row("su <user> [pass]", "switch between guest and root");
+        ui_row("chmod <OW> <file>", "set owner and other permissions");
+        ui_info("Permission values: 4 = read, 2 = write, 6 = read/write, 0 = none");
         return;
     }
-
     if (t && !strcmp(t, "demo")) {
-        ui_header("KERNEL DEMO", "Concurrency and synchronization laboratory");
-        ui_row("race", "compare race condition with mutex protection");
-        ui_row("deadlock", "create and detect a deadlock");
-        ui_row("deadlock fix", "prevent deadlock with lock ordering");
+        ui_header("07  DEMONSTRATIONS", "Concurrency and synchronization examples");
+        ui_row("race", "compare an unsafe counter with mutex protection");
+        ui_row("deadlock", "create and detect a circular wait");
+        ui_row("deadlock fix", "run the deadlock prevention example");
         return;
     }
-
-    if (t) {
-        ui_error("Unknown help category.");
-        kprintf("  No help page exists for: %s\n", t);
+    if (choice) {
+        ui_error("Unknown section. Choose a number from 1 to 7.");
+        return;
     }
-
-    ui_header("QUANTUMOS COMMAND CENTER", "Number Systems Explorer + Low-Level OS Laboratory");
-    ui_section("01", "CALCULATOR");
-    ui_row("convert", "BIN <-> OCT <-> DEC <-> HEX");
-
+    ui_header("QUANTUM OS  /  MAIN MENU", "Enter 'help <number>' to open a section");
+    ui_section("01", "NUMBER CONVERSION");
+    ui_row("convert", "convert binary, octal, decimal and hexadecimal");
     ui_section("02", "SYSTEM");
-    ui_row("about", "OS and kernel summary");
-    ui_row("clear", "redraw terminal");
-    ui_row("uptime", "system uptime");
-    ui_row("reboot / halt", "machine control");
-
-    ui_section("03", "PROCESS");
-    ui_row("ps / threads", "thread inspection and demo");
-    ui_row("sched", "scheduler and context switches");
-    ui_row("trace on|off", "thread trace");
-    ui_row("kill <tid>", "terminate thread");
-
+    ui_row("about / uptime / clear", "system information and screen controls");
+    ui_row("reboot / halt / echo", "basic system commands");
+    ui_section("03", "PROCESSES");
+    ui_row("ps / threads / sched", "thread status and CPU scheduling");
+    ui_row("trace / kill", "scheduler tracing and thread control");
     ui_section("04", "MEMORY");
-    ui_row("meminfo", "heap statistics");
-    ui_row("alloc / free", "manual allocation handles");
-    ui_row("memtest", "Out of Memory demonstration");
-
-    ui_section("05", "FILESYSTEM");
-    ui_row("ls / touch / cat", "RAMFS file operations");
-    ui_row("write / append / rm", "modify or delete files");
-
+    ui_row("meminfo / alloc / free", "inspect and manage kernel heap");
+    ui_row("memtest", "memory allocation stress test");
+    ui_section("05", "FILE SYSTEM");
+    ui_row("ls / touch / write / append", "create and update files");
+    ui_row("cat / rm", "read and remove files");
     ui_section("06", "SECURITY");
-    ui_row("whoami / su", "user and access control");
-    ui_row("chmod", "file permissions");
-
-    ui_section("07", "KERNEL DEMO");
-    ui_row("race", "race condition + mutex");
-    ui_row("deadlock / fix", "deadlock detection + prevention");
-
+    ui_row("whoami / su / chmod", "user accounts and permissions");
+    ui_section("07", "DEMONSTRATIONS");
+    ui_row("race / deadlock", "race condition, mutex and deadlock");
     ui_rule();
     console_color(7);
-    kputs("  Tip: ");
-    console_color(14);
-    kputs("convert 2A hex dec");
-    console_color(7);
-    kputs("  |  ");
-    console_color(14);
-    kputs("about");
-    console_color(7);
-    kputs("  |  ");
-    console_color(14);
-    kputs("help process");
-    console_color(7);
-    kputs("\n");
+    kputs("  Examples: help 3   |   convert 2A hex dec   |   about\n");
     console_color(15);
 }
 
@@ -272,6 +239,19 @@ static const char *rest(const char *line_orig, int skip) {      /* ambil sisa ba
     for (int i = 0; i < skip; i++) { while (*p == ' ') p++; while (*p && *p != ' ') p++; }
     while (*p == ' ') p++;
     return p;
+}
+
+static int parse_u32_arg(const char *s, u32 *value) {
+    u32 n = 0;
+    if (!s || !*s) return 0;
+    for (; *s; s++) {
+        if (*s < '0' || *s > '9') return 0;
+        u32 d = (u32)(*s - '0');
+        if (n > (0xFFFFFFFFU - d) / 10U) return 0;
+        n = n * 10U + d;
+    }
+    *value = n;
+    return 1;
 }
 
 static void reboot(void) { outb(0x64, 0xFE); for (;;) __asm__ volatile("hlt"); }
@@ -353,7 +333,7 @@ static void show_all_bases(u32 value, int negative) {
 static void show_conversion(const char *number, int source, int target) {
     u32 value; int negative;
     if (!parse_number(number, source, &value, &negative)) {
-        kputs("angka tidak valid atau melebihi rentang 32-bit\n");
+        kputs("Invalid number or value outside the 32-bit range\n");
         return;
     }
     if (target) {
@@ -409,18 +389,18 @@ static void convert_number(int ac, char **av) {
     const char *input;
 
     if (ac == 1) {
-        ask_conversion_field("Angka: ", number, sizeof(number));
-        if (!number[0]) { kputs("konversi dibatalkan\n"); return; }
+        ask_conversion_field("Number: ", number, sizeof(number));
+        if (!number[0]) { kputs("Conversion cancelled\n"); return; }
 
         console_color(7);
-        kputs("Klik tombol di jendela QEMU; tekan 1-4 sebagai alternatif.\n");
+        kputs("Select a base with 1-4 or click an option in the QEMU window.\n");
         int source_row, source_x;
-        draw_base_buttons("DARI", &source_row, &source_x);
+        draw_base_buttons("FROM", &source_row, &source_x);
         source = wait_for_base_button(source_row, source_x);
         if (!source) { kputs("konversi dibatalkan\n"); return; }
 
         int target_row, target_x;
-        draw_base_buttons("KE", &target_row, &target_x);
+        draw_base_buttons("TO", &target_row, &target_x);
         target = wait_for_base_button(target_row, target_x);
         if (!target) { kputs("konversi dibatalkan\n"); return; }
         input = number;
@@ -429,11 +409,11 @@ static void convert_number(int ac, char **av) {
         if (ac >= 3) source = number_base(av[2]);
         if (ac == 4) target = number_base(av[3]);
         if ((ac >= 3 && !source) || (ac == 4 && !target)) {
-            kputs("basis tidak dikenal; gunakan bin, oct, dec, atau hex\n");
+            kputs("Unknown base. Use bin, oct, dec or hex\n");
             return;
         }
     } else {
-        kputs("pakai: convert [angka [asal [tujuan]]]\n");
+        kputs("Usage: convert [number [source [target]]]\n");
         return;
     }
 
@@ -454,7 +434,8 @@ void shell_run(void) {
         console_color(15);
 
         readline(line, sizeof(line));
-        memcpy(orig, line, sizeof(line));
+        strncpy(orig, line, sizeof(orig) - 1);
+        orig[sizeof(orig) - 1] = 0;
 
         int ac = split(line, av, 8);
         if (!ac) continue;
@@ -470,14 +451,14 @@ void shell_run(void) {
         /* ================================================================
            02. SYSTEM
            ================================================================ */
-        } else if (!strcmp(c, "help")) {
+        } else if (!strcmp(c, "help") || !strcmp(c, "menu")) {
             help_category(ac > 1 ? av[1] : 0);
 
         } else if (!strcmp(c, "about")) {
             ui_header("SYSTEM INFORMATION", "QuantumOS kernel profile");
             ui_row("OS", "QuantumOS v1.0");
             ui_row("Type", "Specialized Educational Operating System");
-            ui_row("Focus", "Number Systems Explorer");
+            ui_row("Interface", "Command-line shell");
             ui_row("CPU", "i386 protected mode");
             ui_row("Scheduler", "Preemptive Round Robin");
             ui_row("Quantum", "3 ticks / 30 ms");
@@ -485,7 +466,7 @@ void shell_run(void) {
             ui_row("Heap", "512 KB first-fit allocator");
             ui_row("Filesystem", "RAMFS");
             ui_row("Access", "root / guest");
-            ui_ok("All major kernel subsystems are available.");
+            ui_ok("Kernel initialization completed.");
 
         } else if (!strcmp(c, "clear")) {
             console_clear();
@@ -521,8 +502,11 @@ void shell_run(void) {
             kprintf("Switches  : %u\n", ctx_switches);
 
         } else if (!strcmp(c, "trace")) {
-            if (ac > 1)
-                trace_on = !strcmp(av[1], "on");
+            if (ac > 1) {
+                if (!strcmp(av[1], "on")) trace_on = 1;
+                else if (!strcmp(av[1], "off")) trace_on = 0;
+                else { kputs("Usage: trace on|off\n"); continue; }
+            }
             kprintf("Thread trace: %s\n", trace_on ? "ON" : "OFF");
 
         } else if (!strcmp(c, "kill")) {
@@ -554,7 +538,11 @@ void shell_run(void) {
                 continue;
             }
 
-            u32 n = (u32)atoi(av[1]);
+            u32 n;
+            if (!parse_u32_arg(av[1], &n) || n == 0) {
+                kputs("Invalid size. Enter a positive decimal byte count.\n");
+                continue;
+            }
             int id = -1;
             for (int i = 0; i < 16; i++)
                 if (!h_ptr[i]) {
@@ -574,8 +562,10 @@ void shell_run(void) {
             }
 
         } else if (!strcmp(c, "free")) {
-            int id = ac > 1 ? atoi(av[1]) : -1;
-            if (id < 0 || id >= 16 || !h_ptr[id]) {
+            u32 parsed_id;
+            int id = (ac > 1 && parse_u32_arg(av[1], &parsed_id) && parsed_id < 16)
+                     ? (int)parsed_id : -1;
+            if (id < 0 || !h_ptr[id]) {
                 kprintf("Invalid handle.\n");
             } else {
                 kfree(h_ptr[id]);
@@ -660,6 +650,11 @@ void shell_run(void) {
                 continue;
             }
 
+            if (av[1][0] < '0' || av[1][0] > '7' ||
+                av[1][1] < '0' || av[1][1] > '7') {
+                kputs("Permission values must be between 0 and 7.\n");
+                continue;
+            }
             int r = fs_chmod(av[2], av[1][0] - '0', av[1][1] - '0');
             report(r);
             if (!r) kprintf("OK\n");

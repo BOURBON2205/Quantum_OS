@@ -72,7 +72,8 @@ int fs_write(const char *name, const char *txt, int append) {
     if (!f) return E_NOENT;
     if (!allowed(f, P_W)) return E_PERM;
     u32 len = (u32)strlen(txt), base = append ? f->size : 0;
-    u32 need = base + len + 1;
+    if (len > 0xFFFFFFFFU - base - 1U) return E_NOMEM;
+    u32 need = base + len + 1U;
     if (need > f->cap) {
         u32 nc = (need + 63) & ~63u;
         char *nb = kmalloc(nc);
@@ -141,11 +142,11 @@ void fs_list(void) {
 
 const char *fs_err(int e) {
     switch (e) {
-    case E_NOENT: return "berkas/user tidak ditemukan atau nama tidak valid";
-    case E_EXIST: return "berkas sudah ada";
-    case E_PERM:  return "AKSES DITOLAK (permission denied)";
-    case E_NOMEM: return "memori habis (out of memory)";
-    case E_FULL:  return "tabel berkas penuh";
+    case E_NOENT: return "file or user not found, or invalid name";
+    case E_EXIST: return "file already exists";
+    case E_PERM:  return "permission denied";
+    case E_NOMEM: return "out of memory";
+    case E_FULL:  return "file table is full";
     }
     return "error";
 }
@@ -154,8 +155,8 @@ void fs_init(void) {
     memset(files, 0, sizeof(files));
     create_as("readme.txt", UID_ROOT, 6, 4);  
     { int saved = cur_uid; cur_uid = 0;
-      fs_write("readme.txt", "Selamat datang di QuantumOS! Ketik 'help' untuk daftar perintah.\n", 0);
+      fs_write("readme.txt", "Welcome to QuantumOS! Type 'help' to view available commands.\n", 0);
       create_as("secret.txt", UID_ROOT, 6, 0);
-      fs_write("secret.txt", "Data rahasia: hanya root yang boleh membaca berkas ini.\n", 0);
+      fs_write("secret.txt", "Confidential data: only root can read this file.\n", 0);
       cur_uid = saved; }
 }
