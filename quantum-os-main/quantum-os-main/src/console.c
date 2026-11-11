@@ -214,7 +214,7 @@ static void put_num(u32 v, u32 base, int width, char pad) {
 }
 
 void kprintf(const char *f, ...) {
-    u32 fl = irq_save();             /* satu panggilan output = atomik */
+    u32 fl = irq_save();             /* Keep each formatted output operation atomic. */
     va_list ap; va_start(ap, f);
     for (; *f; f++) {
         if (*f != '%') { kputc(*f); continue; }
@@ -223,7 +223,18 @@ void kprintf(const char *f, ...) {
         if (*f == '0') { pad = '0'; f++; }
         while (*f >= '0' && *f <= '9') w = w * 10 + (*f++ - '0');
         switch (*f) {
-        case 'd': { int v = va_arg(ap, int); if (v < 0) { kputc('-'); v = -v; } put_num((u32)v, 10, w, pad); break; }
+        case 'd': {
+            int v = va_arg(ap, int);
+            u32 magnitude;
+            if (v < 0) {
+                kputc('-');
+                magnitude = 0U - (u32)v;
+            } else {
+                magnitude = (u32)v;
+            }
+            put_num(magnitude, 10, w, pad);
+            break;
+        }
         case 'u': put_num(va_arg(ap, u32), 10, w, pad); break;
         case 'x': put_num(va_arg(ap, u32), 16, w, pad); break;
         case 'p': kputs("0x"); put_num(va_arg(ap, u32), 16, 8, '0'); break;
