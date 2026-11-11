@@ -78,7 +78,7 @@ static void ui_usage(const char *text) {
 }
 
 void banner(void) {
-    /* Compact welcome screen designed for the 80x25 VGA text display. */
+    /* Compact welcome header leaves room for command output on 80x25 VGA. */
     console_color(11);
     kputs("\n  +----------------------------------------------------------------------------+\n");
     console_color(15);
@@ -88,40 +88,33 @@ void banner(void) {
 
     console_color(7);
     kputs("  A lightweight 32-bit operating system for learning core OS concepts.\n");
-    kputs("  i386 protected mode  |  Command-line environment  |  QEMU\n\n");
-
-    console_color(11);
-    kputs("  SYSTEM OVERVIEW\n");
-    console_color(8);
-    kputs("  ------------------------------------------------------------------------------\n");
     console_color(10);
-    kputs("  [OK] CPU      [OK] TIMER      [OK] MEMORY      [OK] RAM FILE SYSTEM\n");
-    kputs("  [OK] THREADS  [OK] SCHEDULER  [OK] ACCESS CONTROL\n\n");
+    kputs("  [OK] CPU  [OK] TIMER  [OK] MEMORY  [OK] THREADS  [OK] RAMFS  [OK] SECURITY\n");
 
     console_color(11);
-    kputs("  QUICK ACCESS\n");
+    kputs("  MAIN MENU\n");
     console_color(8);
     kputs("  ------------------------------------------------------------------------------\n");
     console_color(14);
     kputs("   01  Number conversion       02  System information\n");
     kputs("   03  Processes & scheduling  04  Memory management\n");
     kputs("   05  File system             06  Security & permissions\n");
-    kputs("   07  OS demonstrations\n\n");
+    kputs("   07  OS demonstrations\n");
 
     console_color(7);
     kputs("  Type ");
     console_color(14);
     kputs("help");
     console_color(7);
-    kputs(" to view commands, or ");
+    kputs(" for commands, or ");
     console_color(14);
-    kputs("help 01");
+    kputs("help 1");
     console_color(7);
-    kputs(" ... ");
+    kputs(" to ");
     console_color(14);
-    kputs("help 07");
+    kputs("help 7");
     console_color(7);
-    kputs(" for a section.\n");
+    kputs(" for details.\n");
     console_color(11);
     kputs("  ------------------------------------------------------------------------------\n");
     console_color(15);
