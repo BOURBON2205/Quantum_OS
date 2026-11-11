@@ -1,4 +1,8 @@
-/* demo.c - skenario pengujian: thread, race condition, deadlock, memori */
+/* ============================================================================
+ * demo.c
+ * Educational demonstrations for threads, synchronization, deadlock, and
+ * kernel memory management.
+ * ========================================================================== */
 #include "kernel.h"
 
 static sem_t done;
