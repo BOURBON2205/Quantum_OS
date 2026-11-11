@@ -256,7 +256,7 @@ static void help_category(const char *t) {
     console_color(15);
 }
 
-static int split(char *line, char **argv, int max) {static int split(char *line, char **argv, int max) {
+static int split(char *line, char **argv, int max) {
     int n = 0;
     while (*line && n < max) {
         while (*line == ' ') *line++ = 0;
