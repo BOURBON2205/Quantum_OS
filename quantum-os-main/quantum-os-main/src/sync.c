@@ -1,4 +1,7 @@
-/* sync.c - mutex & semaphore (antrian tunggu FIFO), deteksi deadlock via wait-for graph */
+/* ============================================================================
+ * sync.c
+ * Mutexes, semaphores, FIFO wait queues, and deadlock detection.
+ * ========================================================================== */
 #include "kernel.h"
 
 static void wq_push(struct wq *q, thread_t *t) {
@@ -12,7 +15,13 @@ static thread_t *wq_pop(struct wq *q) {
     return t;
 }
 
-void mutex_init(mutex_t *m, const char *name) { m->locked = 0; m->owner = 0; m->q.head = m->q.tail = 0; m->name = name; }
+void mutex_init(mutex_t *m, const char *name) {
+    m->locked = 0;
+    m->owner = 0;
+    m->q.head = 0;
+    m->q.tail = 0;
+    m->name = name;
+}
 
 void mutex_lock(mutex_t *m) {
     u32 f = irq_save();
@@ -34,7 +43,11 @@ void mutex_unlock(mutex_t *m) {
     irq_restore(f);
 }
 
-void sem_init(sem_t *s, int n) { s->count = n; s->q.head = s->q.tail = 0; }
+void sem_init(sem_t *s, int n) {
+    s->count = n;
+    s->q.head = 0;
+    s->q.tail = 0;
+}
 
 void sem_wait(sem_t *s) {
     u32 f = irq_save();
