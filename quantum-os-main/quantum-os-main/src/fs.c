@@ -112,19 +112,30 @@ int fs_chmod(const char *name, int owner, int other) {
 
 void fs_list(void) {
     int n = 0;
-    kprintf("NAMA                    OWNER  MODE  UKURAN\n");
+
+    console_color(11);
+    kputs("  NAME                    OWNER    MODE    SIZE\n");
+    console_color(8);
+    kputs("  ----------------------  -------  ------  --------\n");
+    console_color(15);
+
     for (int i = 0; i < MAX_FILES; i++) if (files[i].used) {
         struct file *f = &files[i];
-        kprintf("%s", f->name);
-        for (int k = (int)strlen(f->name); k < 24; k++) kputc(' ');
-        kprintf("%s", uid_name(f->owner));
-        for (int k = (int)strlen(uid_name(f->owner)); k < 7; k++) kputc(' ');
-        kprintf("%c%c%c%c%c%c  %u\n",
-                f->p_owner & 4 ? 'r' : '-', f->p_owner & 2 ? 'w' : '-', ' ',
-                f->p_other & 4 ? 'r' : '-', f->p_other & 2 ? 'w' : '-', ' ', f->size);
+
+        kprintf("  %-22s  %-7s  %c%c  %c%c    %u B\n",
+                f->name,
+                uid_name(f->owner),
+                f->p_owner & 4 ? 'r' : '-',
+                f->p_owner & 2 ? 'w' : '-',
+                f->p_other & 4 ? 'r' : '-',
+                f->p_other & 2 ? 'w' : '-',
+                f->size);
         n++;
     }
-    kprintf("(%d berkas)\n", n);
+
+    console_color(7);
+    kprintf("  %d file(s) in RAMFS\n", n);
+    console_color(15);
 }
 
 const char *fs_err(int e) {
