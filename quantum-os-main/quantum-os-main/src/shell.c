@@ -215,6 +215,19 @@ static const char *rest(const char *line_orig, int skip) {      /* ambil sisa ba
     return p;
 }
 
+static int parse_u32_arg(const char *s, u32 *value) {
+    u32 n = 0;
+    if (!s || !*s) return 0;
+    for (; *s; s++) {
+        if (*s < '0' || *s > '9') return 0;
+        u32 d = (u32)(*s - '0');
+        if (n > (0xFFFFFFFFU - d) / 10U) return 0;
+        n = n * 10U + d;
+    }
+    *value = n;
+    return 1;
+}
+
 static void reboot(void) { outb(0x64, 0xFE); for (;;) __asm__ volatile("hlt"); }
 
 static void report(int r) { if (r < 0) kprintf("Error: %s\n", fs_err(r)); }
@@ -463,8 +476,11 @@ void shell_run(void) {
             kprintf("Switches  : %u\n", ctx_switches);
 
         } else if (!strcmp(c, "trace")) {
-            if (ac > 1)
-                trace_on = !strcmp(av[1], "on");
+            if (ac > 1) {
+                if (!strcmp(av[1], "on")) trace_on = 1;
+                else if (!strcmp(av[1], "off")) trace_on = 0;
+                else { kputs("Usage: trace on|off\n"); continue; }
+            }
             kprintf("Thread trace: %s\n", trace_on ? "ON" : "OFF");
 
         } else if (!strcmp(c, "kill")) {
@@ -496,7 +512,11 @@ void shell_run(void) {
                 continue;
             }
 
-            u32 n = (u32)atoi(av[1]);
+            u32 n;
+            if (!parse_u32_arg(av[1], &n) || n == 0) {
+                kputs("Invalid size. Enter a positive decimal byte count.\n");
+                continue;
+            }
             int id = -1;
             for (int i = 0; i < 16; i++)
                 if (!h_ptr[i]) {
@@ -516,8 +536,10 @@ void shell_run(void) {
             }
 
         } else if (!strcmp(c, "free")) {
-            int id = ac > 1 ? atoi(av[1]) : -1;
-            if (id < 0 || id >= 16 || !h_ptr[id]) {
+            u32 parsed_id;
+            int id = (ac > 1 && parse_u32_arg(av[1], &parsed_id) && parsed_id < 16)
+                     ? (int)parsed_id : -1;
+            if (id < 0 || !h_ptr[id]) {
                 kprintf("Invalid handle.\n");
             } else {
                 kfree(h_ptr[id]);
@@ -602,6 +624,11 @@ void shell_run(void) {
                 continue;
             }
 
+            if (av[1][0] < '0' || av[1][0] > '7' ||
+                av[1][1] < '0' || av[1][1] > '7') {
+                kputs("Permission values must be between 0 and 7.\n");
+                continue;
+            }
             int r = fs_chmod(av[2], av[1][0] - '0', av[1][1] - '0');
             report(r);
             if (!r) kprintf("OK\n");
