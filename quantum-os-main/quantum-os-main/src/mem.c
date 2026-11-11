@@ -56,8 +56,13 @@ void *kmalloc(u32 n) {
 void kfree(void *p) {
     if (!p) return;
     u32 f = irq_save();
-    struct blk *b = (struct blk *)p - 1;
-    if (b->magic != MAGIC || b->free) { irq_restore(f); kprintf("kfree: pointer tidak valid / double free\n"); return; }
+    struct blk *b = head;
+    while (b && (void *)(b + 1) != p) b = b->next;
+    if (!b || b->magic != MAGIC || b->free) {
+        irq_restore(f);
+        kprintf("kfree: invalid pointer or double free\n");
+        return;
+    }
     b->free = 1; n_free++;
     for (struct blk *c = head; c && c->next; ) {                /* coalesce blok bebas bersebelahan */
         if (c->free && c->next->free) { c->size += sizeof(struct blk) + c->next->size; c->next = c->next->next; }
