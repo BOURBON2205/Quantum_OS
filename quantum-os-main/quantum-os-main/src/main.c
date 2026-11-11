@@ -12,7 +12,8 @@ void kmain(void) {
     fs_init();
     banner();
     console_color(10);
-    kputs("[ READY ] Kernel online | shell ready | scheduler active\n\n");
+    kputs("[ READY ] Kernel initialized successfully.\n");
+    kputs("[ READY ] Shell available. Enter 'help' to begin.\n\n");
     console_color(15);
     __asm__ volatile("sti");
     shell_run();
