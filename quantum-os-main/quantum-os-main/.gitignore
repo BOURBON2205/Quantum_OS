@@ -1,0 +1,5 @@
+# Generated kernel build outputs
+/build/
+*.o
+*.elf
+*.iso
