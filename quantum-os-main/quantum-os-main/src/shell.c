@@ -479,6 +479,7 @@ void shell_run(void) {
         } else if (!strcmp(c, "clear")) {
             console_clear();
 
+
         } else if (!strcmp(c, "echo")) {
             kprintf("%s\n", rest(orig, 1));
 
@@ -692,4 +693,3 @@ void shell_run(void) {
         }
     }
 }
-

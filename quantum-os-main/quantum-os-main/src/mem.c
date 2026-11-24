@@ -4,8 +4,10 @@
  * ========================================================================== */
 #include "kernel.h"
 
+
 #define HEAP_SIZE KERNEL_HEAP_SIZE
 #define MAGIC 0xB0B0CAFE
+
 
 struct blk {
     u32 size;
@@ -14,9 +16,11 @@ struct blk {
     u32 magic;
 }; /* 16-byte block header */
 
+
 static u8 heap[HEAP_SIZE] __attribute__((aligned(16)));
 static struct blk *head;
 static u32 n_alloc, n_free, n_fail;
+
 
 void mem_init(void) {
     head = (struct blk *)heap;
@@ -26,6 +30,7 @@ void mem_init(void) {
     head->magic = MAGIC;
     n_alloc = n_free = n_fail = 0;
 }
+
 
 void *kmalloc(u32 n) {
     if (n == 0) return 0;
@@ -53,6 +58,7 @@ void *kmalloc(u32 n) {
     return 0;
 }
 
+
 void kfree(void *p) {
     if (!p) return;
     u32 f = irq_save();
@@ -70,6 +76,7 @@ void kfree(void *p) {
     }
     irq_restore(f);
 }
+
 
 void mem_info(struct meminfo *mi) {
     if (!mi) return;

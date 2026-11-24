@@ -5,9 +5,12 @@
  * ========================================================================== */
 #include "kernel.h"
 
+
 static sem_t done;
 
+
 static void busy_ticks(u32 n) { u32 end = ticks + n; while ((int)(ticks - end) < 0) ; }
+
 
 /* ---------- 1. Thread lifecycle and state transitions ---------- */
 static void worker_a(void *a) {
@@ -21,6 +24,7 @@ static void worker_b(void *a) {
     sem_post(&done);
 }
 
+
 void demo_threads(void) {
     int old = trace_on; trace_on = 1;
     sem_init(&done, 0);
@@ -33,11 +37,13 @@ void demo_threads(void) {
     threads_dump();
 }
 
+
 /* ---------- 2. Race condition versus mutex ---------- */
 #define RACE_N 1000000
 static volatile int shared;
 static int use_lock;
 static mutex_t cmu;
+
 
 static void race_worker(void *a) {
     (void)a;
@@ -51,6 +57,7 @@ static void race_worker(void *a) {
     sem_post(&done);
 }
 
+
 static void race_once(int lock) {
     use_lock = lock; shared = 0;
     mutex_init(&cmu, "counter-lock"); sem_init(&done, 0);
@@ -63,15 +70,18 @@ static void race_once(int lock) {
             shared == 2 * RACE_N ? "CONSISTENT" : "RACE CONDITION");
 }
 
+
 void demo_race(void) {
     kprintf("  [DEMO] two threads increment a shared counter %d times each.\n", RACE_N);
     race_once(0);
     race_once(1);
 }
 
+
 /* ---------- 3. Deadlock ---------- */
 static mutex_t ma, mb;
 static int ordered;
+
 
 static void dl_1(void *a) {
     (void)a;
@@ -92,6 +102,7 @@ static void dl_2(void *a) {
     mutex_unlock(second); mutex_unlock(first);
     sem_post(&done);
 }
+
 
 void demo_deadlock(int fix) {
     for (int i = 2; i < MAX_THREADS; i++) {              /* Remove blocked threads left by a previous deadlock demonstration. */
@@ -114,12 +125,14 @@ void demo_deadlock(int fix) {
     }
 }
 
+
 /* ---------- 4. Memory ---------- */
 static void print_mem(void) {
     struct meminfo m; mem_info(&m);
     kprintf("  total=%u  used=%u  available=%u  blocks=%u  (alloc=%u free=%u failed=%u)\n",
             m.total, m.used, m.free, m.nblocks, m.nalloc, m.nfree, m.nfail);
 }
+
 
 void demo_memtest(void) {
     void *p[64]; int n = 0;
