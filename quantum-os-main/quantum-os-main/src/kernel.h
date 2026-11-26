@@ -67,6 +67,7 @@ void kputc(char c);
 void kputs(const char *s);
 void kprintf(const char *fmt, ...);
 void console_clear(void);
+void console_clear_workspace(void);
 void console_color(u8 color);
 void console_set_header_end(void);
 void console_scroll_view(int lines);
