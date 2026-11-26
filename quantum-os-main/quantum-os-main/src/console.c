@@ -230,6 +230,30 @@ int console_get_mouse_click(int *x, int *y) {
     return 1;
 }
 
+void console_clear_workspace(void) {
+    mouse_undraw();
+
+    /* Clear only rows below the fixed boot banner. */
+    for (int y = scroll_top; y < VGA_H; y++)
+        for (int x = 0; x < VGA_W; x++)
+            vga[y * VGA_W + x] = 0x0700 | ' ';
+
+    cx = 0;
+    cy = scroll_top;
+    sb_head = sb_count = view_offset = view_saved = 0;
+    hw_cursor();
+
+    /* Keep serial terminals in sync with the VGA text display. */
+    serial_puts("\033[");
+    char digits[4];
+    int n = 0, row = scroll_top + 1;
+    do { digits[n++] = (char)('0' + row % 10); row /= 10; } while (row && n < 3);
+    while (n) serial_putc(digits[--n]);
+    serial_puts(";1H\033[J");
+
+    mouse_draw();
+}
+
 void console_clear(void) {
     mouse_undraw();
     for (int i = 0; i < VGA_W * VGA_H; i++) vga[i] = 0x0700 | ' ';
