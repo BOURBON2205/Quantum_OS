@@ -79,11 +79,18 @@ static void ui_usage(const char *text) {
 
 void banner(void) {
     console_color(11);
-    kputs("\n  QUANTUM OS  v1.0\n");
+    kputs("\n");
+    kputs("    ###  #   #  ###  #   # ##### #   # #   #        ###   ####\n");
+    kputs("   #   # #   # #   # ##  #   #   #   # ## ##       #   # #    \n");
+    kputs("   #   # #   # #   # ##  #   #   #   # ## ##       #   # #    \n");
+    kputs("   #   # #   # ##### # # #   #   #   # # # #       #   #  ### \n");
+    kputs("   # # # #   # #   # #  ##   #   #   # #   #       #   #     #\n");
+    kputs("   #  ## #   # #   # #  ##   #   #   # #   #       #   #     #\n");
+    kputs("    ####  ###  #   # #   #   #    ###  #   #        ###  #### \n");
+    console_color(7);
+    kputs("  Operating System  v1.0  |  32-bit educational system\n");
     console_color(8);
     kputs("  --------------------------------------------------------------\n");
-    console_color(7);
-    kputs("  32-bit educational operating system\n");
     console_color(10);
     kputs("  CPU  OK   TIMER  OK   MEMORY  OK   THREADS  OK   RAMFS  OK\n");
     console_color(11);
@@ -115,12 +122,20 @@ static const char *help_name(const char *choice) {
 
 static void help_category(const char *choice) {
     const char *t = help_name(choice);
+    if (!choice) {
+        console_clear();
+        return;
+    }
+    console_clear_page();
     if (t && !strcmp(t, "calculator")) {
         ui_header("01  NUMBER CONVERTER", "Change a value from one number base to another");
         ui_row("convert", "start the guided converter");
         ui_usage("convert 2A hex dec");
         ui_info("Bases: bin = 2, oct = 8, dec = 10, hex = 16");
         ui_info("Example: 2A in hex is 42 in decimal.");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (t && !strcmp(t, "system")) {
@@ -130,6 +145,9 @@ static void help_category(const char *choice) {
         ui_row("clear", "clear the screen");
         ui_row("echo <text>", "print text");
         ui_row("reboot / halt", "restart / stop the virtual machine");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (t && !strcmp(t, "process")) {
@@ -140,6 +158,9 @@ static void help_category(const char *choice) {
         ui_row("trace on|off", "show or hide thread trace messages");
         ui_row("kill <id>", "stop a thread using its ID");
         ui_info("A thread is a unit of work scheduled by the CPU.");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (t && !strcmp(t, "memory")) {
@@ -149,6 +170,9 @@ static void help_category(const char *choice) {
         ui_row("free <handle>", "release memory using its handle");
         ui_row("memtest", "run the memory stress test");
         ui_info("Example: alloc 128, then free 0 (if handle 0 was returned).");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (t && !strcmp(t, "filesystem")) {
@@ -160,6 +184,9 @@ static void help_category(const char *choice) {
         ui_row("cat <name>", "display file contents");
         ui_row("rm <name>", "delete a file");
         ui_info("Files are stored in RAM and reset when the OS restarts.");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (t && !strcmp(t, "security")) {
@@ -170,6 +197,9 @@ static void help_category(const char *choice) {
         ui_row("chmod <OW> <file>", "set owner and other access levels");
         ui_info("Permission digits: 4 read, 2 write, 1 execute; add them together.");
         ui_info("Example: 6 means read + write. This is a teaching model.");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (t && !strcmp(t, "demo")) {
@@ -177,6 +207,9 @@ static void help_category(const char *choice) {
         ui_row("race", "compare unsafe and protected shared data");
         ui_row("deadlock", "create and detect a circular wait");
         ui_row("deadlock fix", "show a deadlock prevention strategy");
+        console_color(8);
+        kputs("  Type 'help' to return to the main menu.\n");
+        console_color(15);
         return;
     }
     if (choice) {
@@ -192,10 +225,9 @@ static void help_category(const char *choice) {
     ui_row("6", "users and permissions");
     ui_row("7", "operating-system demonstrations");
     ui_rule();
-    ui_usage("convert 2A hex dec");
-    ui_usage("touch notes.txt");
-    ui_usage("write notes.txt Hello");
-    ui_info("Tip: type 'help 5' to see file commands and examples.");
+    ui_info("Type 1-7 to open a category, or enter a command directly.");
+    ui_info("Examples: convert | ps | meminfo | ls");
+    ui_info("Scroll with the mouse wheel or PageUp / PageDown.");
 }
 
 static int split(char *line, char **argv, int max) {

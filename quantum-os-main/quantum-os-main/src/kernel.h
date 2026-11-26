@@ -67,8 +67,11 @@ void kputc(char c);
 void kputs(const char *s);
 void kprintf(const char *fmt, ...);
 void console_clear(void);
+void console_clear_workspace(void);
+void console_clear_page(void);
 void console_color(u8 color);
 void console_set_header_end(void);
+void console_scroll_view(int lines);
 void console_get_cursor(int *x, int *y);
 int  console_get_mouse_click(int *x, int *y);
 
@@ -79,6 +82,8 @@ int  console_get_mouse_click(int *x, int *y);
 #define KEY_HOME  0x105
 #define KEY_END   0x106
 #define KEY_DEL   0x107
+#define KEY_PGUP  0x108
+#define KEY_PGDN  0x109
 
 int console_getc_nb(void);
 int readline(char *buf, int max);

@@ -16,13 +16,19 @@
 static volatile u16 *const vga = (volatile u16 *)0xB8000;
 static int cx, cy;
 static int scroll_top;            /* baris < scroll_top = header tetap, tidak ikut scroll */
+#define SCROLLBACK_LINES 128
+static u16 scrollback[SCROLLBACK_LINES][VGA_W];
+static int sb_head, sb_count, view_offset;
+static u16 view_live[VGA_H][VGA_W];
+static int view_saved;
 static u8  attr = 15;             /* warna teks saat ini (putih terang) */
 static int mouse_enabled, mouse_active;
 static int mouse_px, mouse_py, mouse_pos, mouse_buttons;
 static int mouse_click_pending, mouse_click_x, mouse_click_y;
 static int mouse_drawn, mouse_cell;
 static u16 mouse_saved;
-static u8 mouse_packet[3];
+static u8 mouse_packet[4];
+static int mouse_packet_size = 3;
 
 /* ---------- serial ---------- */
 static void serial_init(void) {
@@ -39,6 +45,7 @@ static void serial_puts(const char *s) { while (*s) serial_putc(*s++); }
 
 /* ---------- VGA ---------- */
 static void hw_cursor(void) {                       /* kursor berkedip mengikuti posisi ketik */
+    outb(0x3D4, 0x0A); outb(0x3D5, 0x0D);
     u16 p = (u16)(cy * VGA_W + cx);
     outb(0x3D4, 0x0F); outb(0x3D5, p & 0xFF);
     outb(0x3D4, 0x0E); outb(0x3D5, p >> 8);
@@ -79,7 +86,7 @@ static void mouse_draw(void) {
 static void mouse_packet_byte(u8 b) {
     if (mouse_pos == 0 && !(b & 0x08)) return;
     mouse_packet[mouse_pos++] = b;
-    if (mouse_pos < 3) return;
+    if (mouse_pos < mouse_packet_size) return;
     mouse_pos = 0;
 
     u8 flags = mouse_packet[0];
@@ -102,6 +109,14 @@ static void mouse_packet_byte(u8 b) {
         mouse_click_pending = 1;
     }
     mouse_buttons = buttons;
+
+    /* IntelliMouse fourth byte is a signed 4-bit wheel delta. */
+    if (mouse_packet_size == 4) {
+        int wheel = mouse_packet[3] & 0x0F;
+        if (wheel & 0x08) wheel -= 16;
+        if (wheel > 0) console_scroll_view(3);
+        else if (wheel < 0) console_scroll_view(-3);
+    }
     mouse_draw();
 }
 
@@ -132,18 +147,77 @@ static void mouse_init(void) {
     if (!ps2_wait_write()) return;
     outb(0x60, config);
     if (!mouse_send(0xF6)) return;
+
+    /* IntelliMouse wheel negotiation: sample-rate sequence 200, 100, 80. */
+    mouse_packet_size = 3;
+    if (mouse_send(0xF3) && mouse_send(200) &&
+        mouse_send(0xF3) && mouse_send(100) &&
+        mouse_send(0xF3) && mouse_send(80) &&
+        mouse_send(0xF2) && ps2_wait_read()) {
+        u8 device_id = inb(0x60);
+        if (device_id == 3 || device_id == 4) mouse_packet_size = 4;
+    }
+
     if (!mouse_send(0xF4)) return;
     mouse_enabled = 1;
 }
 
+static void render_scrollback(void) {
+    int visible_rows = VGA_H - scroll_top;
+    int oldest = (sb_head - sb_count + SCROLLBACK_LINES) % SCROLLBACK_LINES;
+    for (int row = 0; row < visible_rows; row++) {
+        int logical = sb_count + row - view_offset;
+        u16 *dst = (u16 *)&vga[(scroll_top + row) * VGA_W];
+        if (logical < 0) {
+            for (int x = 0; x < VGA_W; x++) dst[x] = 0x0700 | ' ';
+        } else if (logical < sb_count) {
+            int slot = (oldest + logical) % SCROLLBACK_LINES;
+            for (int x = 0; x < VGA_W; x++) dst[x] = scrollback[slot][x];
+        } else {
+            int live_row = scroll_top + logical - sb_count;
+            if (live_row >= VGA_H) live_row = VGA_H - 1;
+            for (int x = 0; x < VGA_W; x++)
+                dst[x] = view_saved ? view_live[live_row][x] : vga[live_row * VGA_W + x];
+        }
+    }
+    if (view_offset > 0) {
+        outb(0x3D4, 0x0A); outb(0x3D5, 0x20);
+    } else {
+        view_saved = 0;
+        hw_cursor();
+    }
+}
+
+void console_scroll_view(int lines) {
+    mouse_undraw();
+    if (view_offset == 0 && lines > 0 && !view_saved) {
+        for (int y = scroll_top; y < VGA_H; y++)
+            for (int x = 0; x < VGA_W; x++) view_live[y][x] = vga[y * VGA_W + x];
+        view_saved = 1;
+    }
+    view_offset += lines;
+    if (view_offset < 0) view_offset = 0;
+    if (view_offset > sb_count) view_offset = sb_count;
+    render_scrollback();
+    mouse_draw();
+}
+
 static void vga_scroll(void) {
-    for (int i = scroll_top * VGA_W; i < VGA_W * (VGA_H - 1); i++) vga[i] = vga[i + VGA_W];
-    for (int i = 0; i < VGA_W; i++) vga[VGA_W * (VGA_H - 1) + i] = 0x0700 | ' ';
+    int slot = sb_head;
+    for (int x = 0; x < VGA_W; x++)
+        scrollback[slot][x] = vga[scroll_top * VGA_W + x];
+    sb_head = (sb_head + 1) % SCROLLBACK_LINES;
+    if (sb_count < SCROLLBACK_LINES) sb_count++;
+    for (int i = scroll_top * VGA_W; i < VGA_W * (VGA_H - 1); i++)
+        vga[i] = vga[i + VGA_W];
+    for (int i = 0; i < VGA_W; i++)
+        vga[VGA_W * (VGA_H - 1) + i] = 0x0700 | ' ';
     cy = VGA_H - 1;
 }
 
 static void vga_putc(char c) {
     if (c == '\r') return;
+    if (view_offset > 0) { mouse_undraw(); view_offset = 0; render_scrollback(); }
     mouse_undraw();
     if (c == '\n') { cx = 0; cy++; }
     else if (c == '\b') { if (cx > 0) { cx--; vga[cy * VGA_W + cx] = ((u16)attr << 8) | ' '; } }
@@ -176,10 +250,44 @@ int console_get_mouse_click(int *x, int *y) {
     return 1;
 }
 
+void console_clear_page(void) {
+    mouse_undraw();
+    for (int i = 0; i < VGA_W * VGA_H; i++) vga[i] = 0x0700 | ' ';
+    cx = cy = scroll_top = 0;
+    sb_head = sb_count = view_offset = view_saved = 0;
+    hw_cursor();
+    serial_puts("\033[2J\033[H");
+    mouse_draw();
+}
+
+void console_clear_workspace(void) {
+    mouse_undraw();
+
+    /* Clear only rows below the fixed boot banner. */
+    for (int y = scroll_top; y < VGA_H; y++)
+        for (int x = 0; x < VGA_W; x++)
+            vga[y * VGA_W + x] = 0x0700 | ' ';
+
+    cx = 0;
+    cy = scroll_top;
+    sb_head = sb_count = view_offset = view_saved = 0;
+    hw_cursor();
+
+    /* Keep serial terminals in sync with the VGA text display. */
+    serial_puts("\033[");
+    char digits[4];
+    int n = 0, row = scroll_top + 1;
+    do { digits[n++] = (char)('0' + row % 10); row /= 10; } while (row && n < 3);
+    while (n) serial_putc(digits[--n]);
+    serial_puts(";1H\033[J");
+
+    mouse_draw();
+}
+
 void console_clear(void) {
     mouse_undraw();
     for (int i = 0; i < VGA_W * VGA_H; i++) vga[i] = 0x0700 | ' ';
-    cx = cy = 0; scroll_top = 0;
+    cx = cy = 0; scroll_top = 0; sb_head = sb_count = view_offset = view_saved = 0;
     hw_cursor();
     serial_puts("\033[2J\033[H");
     banner();                                       /* header (logo) digambar ulang -> tidak hilang */
@@ -191,7 +299,7 @@ void console_init(void) {
     outb(0x3D4, 0x0A); outb(0x3D5, 0x0D);           /* bentuk kursor: garis bawah tebal */
     outb(0x3D4, 0x0B); outb(0x3D5, 0x0F);
     for (int i = 0; i < VGA_W * VGA_H; i++) vga[i] = 0x0700 | ' ';
-    cx = cy = 0; scroll_top = 0;
+    cx = cy = 0; scroll_top = 0; sb_head = sb_count = view_offset = 0;
     hw_cursor();
     serial_puts("\033[0m\033[2J\033[H");
     mouse_init();
@@ -268,7 +376,8 @@ static int kbd_getc_nb(void) {
         case 0x4B: return KEY_LEFT;  case 0x4D: return KEY_RIGHT;
         case 0x48: return KEY_UP;    case 0x50: return KEY_DOWN;
         case 0x47: return KEY_HOME;  case 0x4F: return KEY_END;
-        case 0x53: return KEY_DEL;   case 0x1C: return '\n';
+        case 0x53: return KEY_DEL;   case 0x49: return KEY_PGUP;
+        case 0x51: return KEY_PGDN; case 0x1C: return '\n';
         }
         return -1;
     }
@@ -297,7 +406,9 @@ static int serial_getc_nb(void) {
         case 'A': return KEY_UP;   case 'B': return KEY_DOWN;
         case 'C': return KEY_RIGHT; case 'D': return KEY_LEFT;
         case 'H': return KEY_HOME; case 'F': return KEY_END;
-        case '~': if (num == 3) return KEY_DEL;
+        case '~': if (num == 5) return KEY_PGUP;
+                  if (num == 6) return KEY_PGDN;
+                  if (num == 3) return KEY_DEL;
                   if (num == 1 || num == 7) return KEY_HOME;
                   if (num == 4 || num == 8) return KEY_END;
                   break;
@@ -354,7 +465,11 @@ int readline(char *buf, int max) {
             }
             return n;
         }
-        if (c == '\b') {
+        if (c == KEY_PGUP) {
+            console_scroll_view(18);
+        } else if (c == KEY_PGDN) {
+            console_scroll_view(-18);
+        } else if (c == '\b') {
             if (pos > 0) {
                 memmove(buf + pos - 1, buf + pos, (size_t)(n - pos));
                 n--; pos--; back(1);
