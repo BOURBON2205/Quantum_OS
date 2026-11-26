@@ -2,7 +2,7 @@ name: Kernel build
 
 on:
   push:
-    branches: [main, Abdul]
+    branches: [main]
   pull_request:
     branches: [main]
 
