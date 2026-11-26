@@ -4,8 +4,10 @@
  * ========================================================================== */
 #include "kernel.h"
 
+
 #define MAX_FILES 32
 #define NAME_LEN  24
+
 
 struct file {
     int used;
@@ -20,9 +22,11 @@ struct file {
 static struct file files[MAX_FILES];
 int cur_uid = UID_GUEST;                          /* QuantumOS boots as guest. */
 
+
 const char *uid_name(int uid) {
     return uid == UID_ROOT ? "root" : "guest";
 }
+
 
 int user_switch(const char *name, const char *pass) {
     if (!name) return E_NOENT;
@@ -30,6 +34,7 @@ int user_switch(const char *name, const char *pass) {
         cur_uid = UID_GUEST;
         return 0;
     }
+
 
     if (!strcmp(name, "root")) {
         if (pass && !strcmp(pass, "toor")) {
@@ -41,11 +46,13 @@ int user_switch(const char *name, const char *pass) {
     return E_NOENT;
 }
 
+
 static struct file *find(const char *n) {
     if (!n) return 0;
     for (int i = 0; i < MAX_FILES; i++) if (files[i].used && !strcmp(files[i].name, n)) return &files[i];
     return 0;
 }
+
 
 /* Root bypasses file permission checks; other users use owner/other bits. */
 static int allowed(struct file *f, int want) {
@@ -53,6 +60,7 @@ static int allowed(struct file *f, int want) {
     u8 p = (f->owner == cur_uid) ? f->p_owner : f->p_other;
     return (p & want) == want;
 }
+
 
 static int create_as(const char *name, int uid, int po, int pt) {
     if (!name || !*name || strlen(name) >= NAME_LEN) return E_NOENT;
@@ -69,7 +77,9 @@ static int create_as(const char *name, int uid, int po, int pt) {
     return E_FULL;
 }
 
+
 int fs_create(const char *name) { return create_as(name, cur_uid, 6, 4); }
+
 
 int fs_write(const char *name, const char *txt, int append) {
     if (!txt) return E_NOENT;
@@ -92,6 +102,7 @@ int fs_write(const char *name, const char *txt, int append) {
     return 0;
 }
 
+
 int fs_read(const char *name, const char **data, u32 *size) {
     if (!data || !size) return E_NOENT;
     struct file *f = find(name);
@@ -100,6 +111,7 @@ int fs_read(const char *name, const char **data, u32 *size) {
     *data = f->data ? f->data : ""; *size = f->size;
     return 0;
 }
+
 
 int fs_delete(const char *name) {
     struct file *f = find(name);
@@ -110,6 +122,7 @@ int fs_delete(const char *name) {
     return 0;
 }
 
+
 int fs_chmod(const char *name, int owner, int other) {
     if (owner < 0 || owner > 7 || other < 0 || other > 7) return E_PERM;
     struct file *f = find(name);
@@ -119,14 +132,17 @@ int fs_chmod(const char *name, int owner, int other) {
     return 0;
 }
 
+
 void fs_list(void) {
     int n = 0;
+
 
     console_color(11);
     kputs("  NAME                    OWNER    MODE    SIZE\n");
     console_color(8);
     kputs("  ----------------------  -------  ------  --------\n");
     console_color(15);
+
 
     for (int i = 0; i < MAX_FILES; i++) if (files[i].used) {
         struct file *f = &files[i];
@@ -143,10 +159,12 @@ void fs_list(void) {
         n++;
     }
 
+
     console_color(7);
     kprintf("  %d file(s) in RAMFS\n", n);
     console_color(15);
 }
+
 
 const char *fs_err(int e) {
     switch (e) {
@@ -158,6 +176,7 @@ const char *fs_err(int e) {
     }
     return "error";
 }
+
 
 void fs_init(void) {
     memset(files, 0, sizeof(files));
