@@ -250,6 +250,16 @@ int console_get_mouse_click(int *x, int *y) {
     return 1;
 }
 
+void console_clear_page(void) {
+    mouse_undraw();
+    for (int i = 0; i < VGA_W * VGA_H; i++) vga[i] = 0x0700 | ' ';
+    cx = cy = scroll_top = 0;
+    sb_head = sb_count = view_offset = view_saved = 0;
+    hw_cursor();
+    serial_puts("\033[2J\033[H");
+    mouse_draw();
+}
+
 void console_clear_workspace(void) {
     mouse_undraw();
 
