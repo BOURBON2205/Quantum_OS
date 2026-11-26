@@ -27,7 +27,8 @@ static int mouse_px, mouse_py, mouse_pos, mouse_buttons;
 static int mouse_click_pending, mouse_click_x, mouse_click_y;
 static int mouse_drawn, mouse_cell;
 static u16 mouse_saved;
-static u8 mouse_packet[3];
+static u8 mouse_packet[4];
+static int mouse_packet_size = 3;
 
 /* ---------- serial ---------- */
 static void serial_init(void) {
@@ -85,7 +86,7 @@ static void mouse_draw(void) {
 static void mouse_packet_byte(u8 b) {
     if (mouse_pos == 0 && !(b & 0x08)) return;
     mouse_packet[mouse_pos++] = b;
-    if (mouse_pos < 3) return;
+    if (mouse_pos < mouse_packet_size) return;
     mouse_pos = 0;
 
     u8 flags = mouse_packet[0];
@@ -108,6 +109,14 @@ static void mouse_packet_byte(u8 b) {
         mouse_click_pending = 1;
     }
     mouse_buttons = buttons;
+
+    /* IntelliMouse fourth byte is a signed 4-bit wheel delta. */
+    if (mouse_packet_size == 4) {
+        int wheel = mouse_packet[3] & 0x0F;
+        if (wheel & 0x08) wheel -= 16;
+        if (wheel > 0) console_scroll_view(3);
+        else if (wheel < 0) console_scroll_view(-3);
+    }
     mouse_draw();
 }
 
@@ -138,6 +147,17 @@ static void mouse_init(void) {
     if (!ps2_wait_write()) return;
     outb(0x60, config);
     if (!mouse_send(0xF6)) return;
+
+    /* IntelliMouse wheel negotiation: sample-rate sequence 200, 100, 80. */
+    mouse_packet_size = 3;
+    if (mouse_send(0xF3) && mouse_send(200) &&
+        mouse_send(0xF3) && mouse_send(100) &&
+        mouse_send(0xF3) && mouse_send(80) &&
+        mouse_send(0xF2) && ps2_wait_read()) {
+        u8 device_id = inb(0x60);
+        if (device_id == 3 || device_id == 4) mouse_packet_size = 4;
+    }
+
     if (!mouse_send(0xF4)) return;
     mouse_enabled = 1;
 }
