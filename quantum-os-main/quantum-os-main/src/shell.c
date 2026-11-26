@@ -192,10 +192,9 @@ static void help_category(const char *choice) {
     ui_row("6", "users and permissions");
     ui_row("7", "operating-system demonstrations");
     ui_rule();
-    ui_usage("convert 2A hex dec");
-    ui_usage("touch notes.txt");
-    ui_usage("write notes.txt Hello");
-    ui_info("Tip: type 'help 5' to see file commands and examples.");
+    ui_info("Type 1-7 to open a category, or enter a command directly.");
+    ui_info("Examples: convert | ps | meminfo | ls");
+    ui_info("Use PageUp / PageDown to review previous screen output.");
 }
 
 static int split(char *line, char **argv, int max) {
