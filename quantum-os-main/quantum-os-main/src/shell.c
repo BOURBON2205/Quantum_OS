@@ -114,6 +114,7 @@ static const char *help_name(const char *choice) {
 }
 
 static void help_category(const char *choice) {
+    console_clear_workspace();
     const char *t = help_name(choice);
     if (t && !strcmp(t, "calculator")) {
         ui_header("01  NUMBER CONVERTER", "Change a value from one number base to another");
