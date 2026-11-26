@@ -86,7 +86,6 @@ void banner(void) {
     kputs("  #  ## #   # #   # #  ##   #   #   # #   #   #   #     #\n");
     kputs("   ####  ###  #   # #   #   #    ###  #   #    ###  #### \n");
     console_color(7);
-    console_color(7);
     kputs("  Operating System  v1.0  |  32-bit educational system\n");
     console_color(8);
     kputs("  --------------------------------------------------------------\n");
