@@ -79,7 +79,14 @@ static void ui_usage(const char *text) {
 
 void banner(void) {
     console_color(11);
-    kputs("\n  QUANTUM OS  v1.0\n");
+    kputs("\n");
+    kputs("   QQQQQ   U   U   AAAAA  N   N  TTTTT  U   U  M   M\n");
+    kputs("   Q   Q   U   U  A   A  NN  N    T    U   U  MM MM\n");
+    kputs("   Q Q Q   U   U  AAAAA  N N N    T    U   U  M M M\n");
+    kputs("   Q  QQ   U   U  A   A  N  NN    T    U   U  M   M\n");
+    kputs("   QQQ Q    UUU   A   A  N   N    T     UUU   M   M\n");
+    console_color(7);
+    kputs("                         OPERATING SYSTEM  v1.0\n");
     console_color(8);
     kputs("  --------------------------------------------------------------\n");
     console_color(7);
