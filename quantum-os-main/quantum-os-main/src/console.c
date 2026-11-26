@@ -169,6 +169,7 @@ static void render_scrollback(void) {
 }
 
 void console_scroll_view(int lines) {
+    mouse_undraw();
     if (view_offset == 0 && lines > 0 && !view_saved) {
         for (int y = scroll_top; y < VGA_H; y++)
             for (int x = 0; x < VGA_W; x++) view_live[y][x] = vga[y * VGA_W + x];
@@ -178,6 +179,7 @@ void console_scroll_view(int lines) {
     if (view_offset < 0) view_offset = 0;
     if (view_offset > sb_count) view_offset = sb_count;
     render_scrollback();
+    mouse_draw();
 }
 
 static void vga_scroll(void) {
@@ -195,7 +197,7 @@ static void vga_scroll(void) {
 
 static void vga_putc(char c) {
     if (c == '\r') return;
-    if (view_offset > 0) { view_offset = 0; render_scrollback(); }
+    if (view_offset > 0) { mouse_undraw(); view_offset = 0; render_scrollback(); }
     mouse_undraw();
     if (c == '\n') { cx = 0; cy++; }
     else if (c == '\b') { if (cx > 0) { cx--; vga[cy * VGA_W + cx] = ((u16)attr << 8) | ' '; } }
