@@ -202,7 +202,7 @@ static void help_category(const char *choice) {
     ui_rule();
     ui_info("Type 1-7 to open a category, or enter a command directly.");
     ui_info("Examples: convert | ps | meminfo | ls");
-    ui_info("Use PageUp / PageDown to review previous screen output.");
+    ui_info("Scroll with the mouse wheel or PageUp / PageDown.");
 }
 
 static int split(char *line, char **argv, int max) {
