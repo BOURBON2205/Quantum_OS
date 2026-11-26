@@ -79,6 +79,8 @@ int  console_get_mouse_click(int *x, int *y);
 #define KEY_HOME  0x105
 #define KEY_END   0x106
 #define KEY_DEL   0x107
+#define KEY_PGUP  0x108
+#define KEY_PGDN  0x109
 
 int console_getc_nb(void);
 int readline(char *buf, int max);
