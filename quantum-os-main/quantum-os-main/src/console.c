@@ -19,6 +19,8 @@ static int scroll_top;            /* baris < scroll_top = header tetap, tidak ik
 #define SCROLLBACK_LINES 128
 static u16 scrollback[SCROLLBACK_LINES][VGA_W];
 static int sb_head, sb_count, view_offset;
+static u16 view_live[VGA_H][VGA_W];
+static int view_saved;
 static u8  attr = 15;             /* warna teks saat ini (putih terang) */
 static int mouse_enabled, mouse_active;
 static int mouse_px, mouse_py, mouse_pos, mouse_buttons;
@@ -42,6 +44,7 @@ static void serial_puts(const char *s) { while (*s) serial_putc(*s++); }
 
 /* ---------- VGA ---------- */
 static void hw_cursor(void) {                       /* kursor berkedip mengikuti posisi ketik */
+    outb(0x3D4, 0x0A); outb(0x3D5, 0x0D);
     u16 p = (u16)(cy * VGA_W + cx);
     outb(0x3D4, 0x0F); outb(0x3D5, p & 0xFF);
     outb(0x3D4, 0x0E); outb(0x3D5, p >> 8);
@@ -153,15 +156,24 @@ static void render_scrollback(void) {
         } else {
             int live_row = scroll_top + logical - sb_count;
             if (live_row >= VGA_H) live_row = VGA_H - 1;
-            for (int x = 0; x < VGA_W; x++) dst[x] = vga[live_row * VGA_W + x];
+            for (int x = 0; x < VGA_W; x++)
+                dst[x] = view_saved ? view_live[live_row][x] : vga[live_row * VGA_W + x];
         }
     }
     if (view_offset > 0) {
         outb(0x3D4, 0x0A); outb(0x3D5, 0x20);
-    } else hw_cursor();
+    } else {
+        view_saved = 0;
+        hw_cursor();
+    }
 }
 
 void console_scroll_view(int lines) {
+    if (view_offset == 0 && lines > 0 && !view_saved) {
+        for (int y = scroll_top; y < VGA_H; y++)
+            for (int x = 0; x < VGA_W; x++) view_live[y][x] = vga[y * VGA_W + x];
+        view_saved = 1;
+    }
     view_offset += lines;
     if (view_offset < 0) view_offset = 0;
     if (view_offset > sb_count) view_offset = sb_count;
@@ -219,7 +231,7 @@ int console_get_mouse_click(int *x, int *y) {
 void console_clear(void) {
     mouse_undraw();
     for (int i = 0; i < VGA_W * VGA_H; i++) vga[i] = 0x0700 | ' ';
-    cx = cy = 0; scroll_top = 0; sb_head = sb_count = view_offset = 0;
+    cx = cy = 0; scroll_top = 0; sb_head = sb_count = view_offset = view_saved = 0;
     hw_cursor();
     serial_puts("\033[2J\033[H");
     banner();                                       /* header (logo) digambar ulang -> tidak hilang */
